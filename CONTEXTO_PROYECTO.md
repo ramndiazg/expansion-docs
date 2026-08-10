@@ -24,14 +24,19 @@ Desarrollador y líder técnico: Ramon (backend, frontend, bases de datos, algo 
 
 ## Estructura de repos
 
+Tres repos independientes en GitHub (usuario `ramndiazg`), todos dentro de la misma carpeta local `la-expansion/` por organización, pero sin relación de git entre ellos:
+
 ```
 la-expansion/
-├── CONTEXTO_PROYECTO.md
-├── ARQUITECTURA.md
-├── HISTORIAL_MODIFICACIONES.md
-├── expansion-backend/     (Node.js/Express + MongoDB Atlas, deploy en Render)
-└── expansion-frontend/    (Next.js, deploy en Vercel)
+├── la-expansion-docs/      → github.com/ramndiazg/la-expansion-docs
+│   ├── CONTEXTO_PROYECTO.md
+│   ├── ARQUITECTURA.md
+│   └── HISTORIAL_MODIFICACIONES.md
+├── expansion-backend/      → github.com/ramndiazg/expansion-backend
+└── expansion-frontend/     → github.com/ramndiazg/expansion-frontend
 ```
+
+Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada repo (ej. `expansion-backend/src/server.js`), no a la carpeta padre `la-expansion/`.
 
 ## Funcionalidades acordadas (v2 — versión movimiento, no partido)
 
@@ -87,6 +92,15 @@ la-expansion/
 - SEO técnico: sitemap.xml, robots.txt, metadatos dinámicos
 - Analytics (Google Analytics o Plausible)
 - Seguridad: rate limiting en formularios, captcha, backups de BD
+
+## Restricción de presupuesto
+
+**Todo el proyecto debe mantenerse gratis en la medida de lo posible.** Esto aplica a cada decisión de infraestructura y servicios de terceros:
+
+- MongoDB Atlas: tier **Free** (M0, 512 MB), no M10 ni Flex.
+- Vercel: plan gratuito (Hobby).
+- Render: plan gratuito para el backend.
+- Cualquier servicio adicional (email, analytics, captcha, etc.) debe evaluarse primero en su tier gratuito antes de considerar planes pagos.
 
 ## Fase actual
 
