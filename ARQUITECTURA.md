@@ -36,7 +36,15 @@ la-expansion/
     └── (scaffold default de create-next-app, aún sin tocar)
 ```
 
-Nota: `expansion-frontend` todavía no se decidió App Router vs Pages Router — create-next-app ya lo generó, se documentará qué usa en el próximo bloque.
+Nota: `expansion-frontend` usa **App Router**, TypeScript, sin carpeta `src/` (todo vive directo en `app/`). Confirmado 2026-08-10.
+
+## Frontend — páginas y estado
+
+| Página | Ruta           | Descripción                                                                                       | Estado         |
+| ------ | -------------- | ------------------------------------------------------------------------------------------------- | -------------- |
+| Inicio | `app/page.tsx` | Client component, hace fetch a `/api/health` al montar, muestra estado de conexión con el backend | ✅ funcionando |
+
+`app/layout.tsx` — metadata actualizada a "La Expansión".
 
 ## Variables de entorno
 
@@ -48,13 +56,17 @@ MONGODB_URI=mongodb+srv://<usuario>:<password>@cluster0.xxxxx.mongodb.net/la-exp
 CORS_ORIGIN=http://localhost:3000
 ```
 
-**expansion-frontend/.env** — pendiente, se completa en el próximo bloque (conexión frontend→backend).
+**expansion-frontend/.env.local**
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
 
 ## Infraestructura desplegada
 
 - **MongoDB Atlas**: cluster `Cluster0`, tier **Free (M0)**, proveedor AWS, región `us-east-1` (N. Virginia). Network Access: `0.0.0.0/0` (allow anywhere) — necesario porque Render (plan free) no tiene IP fija.
 - **Backend**: corriendo localmente en `localhost:4000`, aún no desplegado a Render.
-- **Frontend**: aún no desplegado a Vercel.
+- **Frontend**: corriendo localmente en `localhost:3000`, conectado exitosamente al backend vía `/api/health`. Aún no desplegado a Vercel.
 
 ## Modelos de datos (Mongoose)
 

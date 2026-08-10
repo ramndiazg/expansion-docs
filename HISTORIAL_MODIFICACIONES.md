@@ -110,3 +110,28 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 - (Opcional) Borrar la noticia de prueba de la base de datos, o dejarla como dato de ejemplo.
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (sigue pendiente desde sesión 1).
 - Retomar el bloque de frontend: página de Inicio + fetch a `/api/health`.
+
+---
+
+### 2026-08-10 — Sesión 5: Frontend conectado al backend — Fase 0 completa
+
+**Qué se hizo:**
+
+- Se confirmó estructura del frontend: App Router, TypeScript, sin `src/`.
+- Se creó `.env.local` con `NEXT_PUBLIC_API_URL`.
+- Se reemplazó `app/page.tsx` (boilerplate de create-next-app) por una página que hace fetch a `/api/health` del backend y muestra el estado de conexión.
+- Se actualizó `metadata` en `app/layout.tsx` (title/description de "La Expansión").
+
+**Qué se probó:**
+
+- `npm run dev` en frontend, con backend corriendo en paralelo. ✅
+- `http://localhost:3000` muestra "Estado del backend: ok" con timestamp real. ✅ Pipeline completo (frontend → backend → MongoDB Atlas) validado end-to-end.
+
+**Fase 0 — Esqueleto técnico: COMPLETADA.** Los tres repos (`expansion-backend`, `expansion-frontend`, `la-expansion-docs`) están creados, vinculados a GitHub, y el flujo de datos frontend↔backend↔DB funciona en local.
+
+**Qué falta / pendiente para próxima sesión:**
+
+- Hacer commit de este bloque en `expansion-frontend`.
+- Decidir siguiente prioridad: (a) deploy a Vercel/Render para tener el sitio accesible públicamente, o (b) seguir construyendo features (páginas institucionales, CRUD real de noticias en el frontend, panel admin).
+- Sigue pendiente probar Miembro/Voluntario/Evento/Encuesta individualmente en el backend (desde sesión 3-4).
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
