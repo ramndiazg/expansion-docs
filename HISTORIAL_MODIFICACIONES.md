@@ -165,3 +165,33 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
 - Sigue pendiente probar Miembro/Voluntario/Evento/Encuesta individualmente en el backend.
 - Decidir próximo bloque: noticias visibles en frontend, panel admin, o deploy a producción.
+
+---
+
+### 2026-08-10 — Sesión 7: Rediseño (v2) + noticias multimedia (pendiente de prueba)
+
+**Qué se hizo:**
+
+- Feedback de Ramon sobre el diseño v1: se sentía anticuado. Rediseño completo:
+  - Paleta: blanco en vez de crema, `--ink` azul-marino (`#101828`) en vez del tono oscuro anterior, acento `--blue` en vez de ámbar, `--slate` en vez de teal.
+  - Tipografía: Space Grotesk reemplaza a Fraunces (100% sans-serif).
+  - Se ajustó el azul a un tono más suave (`#4E7FDB`) tras primer feedback.
+- Se actualizaron: `globals.css`, `layout.tsx`, `Navbar.tsx`, `Footer.tsx`, `app/page.tsx`, `sobre-el-movimiento/page.tsx`, `liderazgo/page.tsx`, `noticias/page.tsx`, `noticias/[slug]/page.tsx`.
+- Se agregó menú hamburguesa responsive en `Navbar.tsx` (el movimiento se consume mayoritariamente desde móvil — principio mobile-first registrado en `ARQUITECTURA.md`).
+- Se rediseñó el hero del Home: título más grande con efecto degradado en la palabra "expande", y presencia de Mario Díaz (nombre + cargo + avatar placeholder) fuera de la página de Liderazgo, por pedido explícito de dar más peso personalista al Secretario General.
+- Se extendió `Noticia.js` con `imagenesAdicionales` (array de URLs) y `videoUrl` (YouTube), para soportar noticias con fotos y video.
+- Se actualizó `noticias/[slug]/page.tsx` para renderizar imagen destacada, galería de imágenes adicionales, y embed de YouTube.
+
+**Qué se probó:**
+
+- Cambios visuales (color, tipografía, hero, menú) confirmados por Ramon: "se ve mucho mejor". ✅
+- Campos nuevos de Noticia (`imagenesAdicionales`, `videoUrl`) y su renderizado en el frontend: **NO probados todavía** — queda pendiente para la próxima sesión antes de hacer commit de esa parte específica.
+
+**Qué falta / pendiente para próxima sesión:**
+
+- Probar creación de una noticia con imagen destacada, imágenes adicionales y video de YouTube (vía curl, con URLs de ejemplo) y confirmar que se ve bien en `/noticias/[slug]`.
+- Una vez probado: commit de `expansion-backend` (modelo) y `expansion-frontend` (rediseño completo + noticia multimedia) — **todavía sin commitear**, sesión 6 fue el último commit real.
+- Nota para el futuro panel admin: el `contenido` de la noticia sigue siendo texto plano — un editor de texto enriquecido (con imágenes/formato dentro del párrafo) es trabajo del panel admin, no de esta fase.
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
+- Sigue pendiente probar Miembro/Voluntario/Evento/Encuesta individualmente en el backend.
+- Decidir próximo bloque: panel admin o deploy a producción.

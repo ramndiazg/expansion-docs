@@ -38,30 +38,38 @@ la-expansion/
 
 Nota: `expansion-frontend` usa **App Router**, TypeScript, sin carpeta `src/` (todo vive directo en `app/`). Confirmado 2026-08-10.
 
-## Sistema de diseño
+## Sistema de diseño (v2 — actualizado 2026-08-10)
 
-**Paleta** (definida en `app/globals.css` como CSS variables + `@theme inline` de Tailwind v4):
+**Principio: mobile-first.** El tráfico esperado es mayoritariamente desde móvil — todo bloque nuevo debe diseñarse y probarse primero en viewport angosto.
+
+**Paleta:**
 | Token | Hex | Uso |
 |---|---|---|
-| `--cream` | `#F7F5F1` | Fondo base |
-| `--ink` | `#0F2027` | Texto principal, fondo del hero/footer |
-| `--ink-soft` | `#1C2E33` | Bloques placeholder, acentos oscuros secundarios |
-| `--amber` | `#F2A93B` | Acento primario (CTAs, labels destacados) |
-| `--teal` | `#2D8C7F` | Acento secundario (bordes, detalles) |
+| `--ink` | `#101828` | Texto principal, fondo del hero/footer |
+| `--ink-soft` | `#1D2939` | Bloques placeholder, acentos oscuros secundarios |
+| `--blue` | `#4E7FDB` | Acento primario (CTAs, labels destacados) — versión suave, no saturado |
+| `--slate` | `#64748B` | Acento secundario (bordes, detalles) |
+| fondo | `#FFFFFF` (blanco nativo) | Fondo base |
 
-Sin dark mode automático — paleta fija.
+Sin dark mode automático.
 
-**Tipografía**: Fraunces (display, títulos) + Inter (body), cargadas vía `next/font/google` en `app/layout.tsx`, expuestas como `font-display` / `font-sans` en Tailwind.
+**Tipografía**: Space Grotesk (display, títulos) + Inter (body) — 100% sans-serif, reemplazó a Fraunces por sentirse "anticuado" combinado con la paleta anterior.
 
-**Elemento de firma**: motivo de anillos concéntricos (SVG) en el hero del Home, referencia literal al nombre "La Expansión".
+**Elemento de firma**: motivo de anillos concéntricos (SVG) en el hero del Home.
+
+**Navegación**: menú hamburguesa en móvil (`components/Navbar.tsx`, `"use client"`, estado `open` con `useState`), menú horizontal en desktop (`md:flex`).
+
+**Personalismo del líder**: Mario Díaz debe tener presencia visible fuera de la página de Liderazgo — implementado en el hero del Home (línea "Liderado por Mario Díaz, Secretario General" con avatar placeholder).
 
 ## Frontend — páginas y estado
 
-| Página              | Ruta                               | Descripción                                                                                  | Estado         |
-| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------- | -------------- |
-| Inicio              | `app/page.tsx`                     | Hero con anillos SVG + fetch a `/api/health` _(ver nota)_ + sección de pilares (placeholder) | ✅ funcionando |
-| Sobre el movimiento | `app/sobre-el-movimiento/page.tsx` | Historia, misión, visión, valores — **todo contenido placeholder**                           | ✅ funcionando |
-| Liderazgo           | `app/liderazgo/page.tsx`           | Bio de Mario Díaz + estructura organizativa — **todo contenido placeholder**                 | ✅ funcionando |
+| Página              | Ruta                               | Descripción                                                                                             | Estado         |
+| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------- |
+| Inicio              | `app/page.tsx`                     | Hero con anillos SVG + fetch a `/api/health` _(ver nota)_ + sección de pilares (placeholder)            | ✅ funcionando |
+| Sobre el movimiento | `app/sobre-el-movimiento/page.tsx` | Historia, misión, visión, valores — **todo contenido placeholder**                                      | ✅ funcionando |
+| Liderazgo           | `app/liderazgo/page.tsx`           | Bio de Mario Díaz + estructura organizativa — **todo contenido placeholder**                            | ✅ funcionando |
+| Noticias (listado)  | `app/noticias/page.tsx`            | Server component, fetch a `/api/noticias?estado=publicado`, tarjetas con categoría/título/resumen/fecha | ✅ funcionando |
+| Noticias (detalle)  | `app/noticias/[slug]/page.tsx`     | Server component, fetch a `/api/noticias/:slug`, `notFound()` si no existe                              | ✅ funcionando |
 
 **Nota**: el `app/page.tsx` de esta sesión reemplazó la versión que hacía fetch a `/api/health` (sesión 5) por la versión con hero de marca. El check de salud del backend ya no es visible en Home — si se necesita, se debe reintegrar deliberadamente (ej. en una futura página de estado/diagnóstico), no en la página pública.
 
@@ -105,6 +113,8 @@ Todos en `expansion-backend/src/models/`.
 | resumen | String | requerido, máx 300 caracteres |
 | contenido | String | requerido |
 | imagenDestacada | String | URL |
+| imagenesAdicionales | [String] | URLs de fotos adicionales — ⚠️ agregado 2026-08-10, sin probar |
+| videoUrl | String | Link de YouTube, se convierte a embed en el frontend — ⚠️ agregado 2026-08-10, sin probar |
 | categoria | enum | `comunicado`, `actividad`, `declaracion`, `en_los_medios` |
 | autor | String | requerido |
 | estado | enum | `borrador` \| `publicado` (default `borrador`) |
@@ -157,23 +167,24 @@ Todos incluyen `timestamps: true` (createdAt/updatedAt automáticos).
 
 ## Endpoints del backend
 
-| Método              | Ruta                                       | Descripción                                                    | Estado                                            |
-| ------------------- | ------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------- |
-| GET                 | `/api/health`                              | Verifica que el servidor y la conexión a MongoDB estén activos | ✅ funcionando                                    |
-| GET                 | `/api/noticias`                            | Lista noticias (filtros opcionales `?estado=` `?categoria=`)   | ✅ probado                                        |
-| GET                 | `/api/noticias/:slug`                      | Obtiene una noticia por slug                                   | ✅ (patrón replicado, no probado individualmente) |
-| POST                | `/api/noticias`                            | Crea noticia (slug autogenerado)                               | ✅ probado                                        |
-| PUT                 | `/api/noticias/:id`                        | Actualiza noticia                                              | ✅ (patrón replicado, no probado individualmente) |
-| DELETE              | `/api/noticias/:id`                        | Elimina noticia                                                | ✅ (patrón replicado, no probado individualmente) |
-| GET/POST/PUT/DELETE | `/api/miembros`, `/api/miembros/:id`       | CRUD de afiliación                                             | ⚠️ mismo patrón que Noticia, aún sin probar       |
-| GET/POST/PUT/DELETE | `/api/voluntarios`, `/api/voluntarios/:id` | CRUD de voluntariado                                           | ⚠️ mismo patrón, aún sin probar                   |
-| GET/POST/PUT/DELETE | `/api/eventos`, `/api/eventos/:id`         | CRUD de eventos                                                | ⚠️ mismo patrón, aún sin probar                   |
-| GET/POST/DELETE     | `/api/encuestas`, `/api/encuestas/:id`     | CRUD de encuestas                                              | ⚠️ mismo patrón, aún sin probar                   |
-| POST                | `/api/encuestas/:id/votar/:opcionId`       | Incrementa el voto de una opción                               | ⚠️ aún sin probar                                 |
+| Método              | Ruta                                       | Descripción                                                    | Estado                                                |
+| ------------------- | ------------------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------- |
+| GET                 | `/api/health`                              | Verifica que el servidor y la conexión a MongoDB estén activos | ✅ funcionando                                        |
+| GET                 | `/api/noticias`                            | Lista noticias (filtros opcionales `?estado=` `?categoria=`)   | ✅ probado                                            |
+| GET                 | `/api/noticias/:slug`                      | Obtiene una noticia por slug                                   | ✅ (patrón replicado, no probado individualmente)     |
+| POST                | `/api/noticias`                            | Crea noticia (slug autogenerado)                               | ✅ probado                                            |
+| PUT                 | `/api/noticias/:id`                        | Actualiza noticia                                              | ✅ probado (usado para publicar la noticia de prueba) |
+| DELETE              | `/api/noticias/:id`                        | Elimina noticia                                                | ✅ (patrón replicado, no probado individualmente)     |
+| GET/POST/PUT/DELETE | `/api/miembros`, `/api/miembros/:id`       | CRUD de afiliación                                             | ⚠️ mismo patrón que Noticia, aún sin probar           |
+| GET/POST/PUT/DELETE | `/api/voluntarios`, `/api/voluntarios/:id` | CRUD de voluntariado                                           | ⚠️ mismo patrón, aún sin probar                       |
+| GET/POST/PUT/DELETE | `/api/eventos`, `/api/eventos/:id`         | CRUD de eventos                                                | ⚠️ mismo patrón, aún sin probar                       |
+| GET/POST/DELETE     | `/api/encuestas`, `/api/encuestas/:id`     | CRUD de encuestas                                              | ⚠️ mismo patrón, aún sin probar                       |
+| POST                | `/api/encuestas/:id/votar/:opcionId`       | Incrementa el voto de una opción                               | ⚠️ aún sin probar                                     |
 
 ## Notas técnicas / bugs conocidos y resueltos
 
 - **Mongoose 9.x — hooks síncronos no usan `next()`**: el hook `pre('validate')` de `Noticia.js` originalmente incluía un parámetro `next` que causaba `"next is not a function"` al no ser invocado correctamente por esta versión de Mongoose. Se corrigió quitando el parámetro `next` del callback (hook síncrono, sin callback). Si se agregan más hooks `pre`/`post` en otros modelos, verificar si necesitan ser async o síncronos según corresponda, en vez de asumir el estilo clásico de Mongoose 6/7.
+- **Zona horaria en fechas (conocido, no resuelto)**: `toLocaleDateString` en las páginas de noticias interpreta fechas guardadas como medianoche UTC y las corre un día hacia atrás al mostrarlas en horario de RD (UTC-4). Ej: `fechaPublicacion: "2026-08-10T00:00:00.000Z"` se muestra como "9 de agosto". Pendiente de resolver cuando se construya el selector de fecha en el panel admin (probablemente forzando la hora a mediodía UTC, o formateando explícitamente en UTC en el frontend).
 
 ## Decisiones técnicas registradas
 
