@@ -135,3 +135,33 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 - Decidir siguiente prioridad: (a) deploy a Vercel/Render para tener el sitio accesible públicamente, o (b) seguir construyendo features (páginas institucionales, CRUD real de noticias en el frontend, panel admin).
 - Sigue pendiente probar Miembro/Voluntario/Evento/Encuesta individualmente en el backend (desde sesión 3-4).
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
+
+---
+
+### 2026-08-10 — Sesión 6: Sistema de diseño y páginas institucionales
+
+**Qué se hizo:**
+
+- Se registraron dos decisiones de arquitectura en `CONTEXTO_PROYECTO.md`: (1) autenticación será JWT propio, no NextAuth, mismo patrón que Muvo; (2) sin identidad visual previa, se propuso paleta y tipografía desde cero.
+- Se definió el sistema de diseño: paleta cream/ink/amber/teal, tipografía Fraunces (display) + Inter (body), motivo de anillos concéntricos como elemento de firma.
+- Se actualizó `app/globals.css` con los tokens de color vía `@theme inline` (Tailwind v4), se quitó el dark mode automático del boilerplate.
+- Se actualizó `app/layout.tsx`: carga de fuentes, se agregó `<Navbar />` y `<Footer />` globales.
+- Se crearon `components/Navbar.tsx` y `components/Footer.tsx`.
+- Se reemplazó `app/page.tsx` con el Home de marca (hero + sección de pilares) — esto reemplaza la versión de sesión 5 que mostraba el estado de `/api/health`.
+- Se crearon `app/sobre-el-movimiento/page.tsx` y `app/liderazgo/page.tsx`.
+- Todo el contenido de texto es placeholder explícito, marcado con comentarios `{/* PLACEHOLDER */}`.
+
+**Qué se probó:**
+
+- Las tres páginas cargan sin errores. ✅
+- Confirmado visualmente que los estilos (colores, tipografías, tamaños) se aplican correctamente — Tailwind v4 tomó bien los tokens custom. ✅
+
+**Qué falta / pendiente para próxima sesión:**
+
+- Hacer commit de este bloque en `expansion-frontend`.
+- Reemplazar todo el contenido placeholder con copy real cuando Ramon/el equipo lo tenga listo.
+- El botón "Afíliate" da 404 (esperado) — construir esa página cuando se aborde el bloque de membresía.
+- El check de `/api/health` visible en Home se perdió al reemplazar la página — decidir si se quiere en algún lado (ej. página de diagnóstico aparte).
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
+- Sigue pendiente probar Miembro/Voluntario/Evento/Encuesta individualmente en el backend.
+- Decidir próximo bloque: noticias visibles en frontend, panel admin, o deploy a producción.

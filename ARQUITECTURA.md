@@ -38,13 +38,38 @@ la-expansion/
 
 Nota: `expansion-frontend` usa **App Router**, TypeScript, sin carpeta `src/` (todo vive directo en `app/`). Confirmado 2026-08-10.
 
+## Sistema de diseño
+
+**Paleta** (definida en `app/globals.css` como CSS variables + `@theme inline` de Tailwind v4):
+| Token | Hex | Uso |
+|---|---|---|
+| `--cream` | `#F7F5F1` | Fondo base |
+| `--ink` | `#0F2027` | Texto principal, fondo del hero/footer |
+| `--ink-soft` | `#1C2E33` | Bloques placeholder, acentos oscuros secundarios |
+| `--amber` | `#F2A93B` | Acento primario (CTAs, labels destacados) |
+| `--teal` | `#2D8C7F` | Acento secundario (bordes, detalles) |
+
+Sin dark mode automático — paleta fija.
+
+**Tipografía**: Fraunces (display, títulos) + Inter (body), cargadas vía `next/font/google` en `app/layout.tsx`, expuestas como `font-display` / `font-sans` en Tailwind.
+
+**Elemento de firma**: motivo de anillos concéntricos (SVG) en el hero del Home, referencia literal al nombre "La Expansión".
+
 ## Frontend — páginas y estado
 
-| Página | Ruta           | Descripción                                                                                       | Estado         |
-| ------ | -------------- | ------------------------------------------------------------------------------------------------- | -------------- |
-| Inicio | `app/page.tsx` | Client component, hace fetch a `/api/health` al montar, muestra estado de conexión con el backend | ✅ funcionando |
+| Página              | Ruta                               | Descripción                                                                                  | Estado         |
+| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------- | -------------- |
+| Inicio              | `app/page.tsx`                     | Hero con anillos SVG + fetch a `/api/health` _(ver nota)_ + sección de pilares (placeholder) | ✅ funcionando |
+| Sobre el movimiento | `app/sobre-el-movimiento/page.tsx` | Historia, misión, visión, valores — **todo contenido placeholder**                           | ✅ funcionando |
+| Liderazgo           | `app/liderazgo/page.tsx`           | Bio de Mario Díaz + estructura organizativa — **todo contenido placeholder**                 | ✅ funcionando |
 
-`app/layout.tsx` — metadata actualizada a "La Expansión".
+**Nota**: el `app/page.tsx` de esta sesión reemplazó la versión que hacía fetch a `/api/health` (sesión 5) por la versión con hero de marca. El check de salud del backend ya no es visible en Home — si se necesita, se debe reintegrar deliberadamente (ej. en una futura página de estado/diagnóstico), no en la página pública.
+
+**Componentes compartidos**: `components/Navbar.tsx` (logo + enlaces + botón Afíliate), `components/Footer.tsx`. Ambos registrados en `app/layout.tsx`.
+
+**Pendiente conocido**: el botón "Afíliate" enlaza a `/afiliate`, que aún no existe (404 esperado hasta construir el formulario de membresía).
+
+**Todo el contenido de texto (historia, misión, visión, valores, bio de Mario Díaz, estructura organizativa, eslogan del hero, pilares) es placeholder** y debe reemplazarse con copy real antes de producción — buscar comentarios `{/* PLACEHOLDER: ... */}` en el código para ubicarlos todos.
 
 ## Variables de entorno
 

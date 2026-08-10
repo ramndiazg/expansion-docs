@@ -93,6 +93,10 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 - Analytics (Google Analytics o Plausible)
 - Seguridad: rate limiting en formularios, captcha, backups de BD
 
+## Decisiones de arquitectura registradas
+
+- **Autenticación**: NO se usa NextAuth/Auth.js. Se implementará JWT propio (mismo patrón que en Muvo RD Vial) para el futuro panel admin. Aplica cuando se construya login/panel de administración.
+
 ## Restricción de presupuesto
 
 **Todo el proyecto debe mantenerse gratis en la medida de lo posible.** Esto aplica a cada decisión de infraestructura y servicios de terceros:
