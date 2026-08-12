@@ -195,3 +195,43 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
 - Sigue pendiente probar Miembro/Voluntario/Evento/Encuesta individualmente en el backend.
 - Decidir próximo bloque: panel admin o deploy a producción.
+
+---
+
+### 2026-08-10 — Sesión 8: Auth JWT, roles, panel admin (Noticias)
+
+**Qué se hizo:**
+
+- Se diseñó el sistema de roles con Ramon: **Publicador** (uso diario — noticias, comentarios, sus propias encuestas) y **Admin** (dashboard, dominio sobre cualquier encuesta, y única acción exclusiva: desactivar cuentas — activar lo puede hacer cualquiera para no crear cuello de botella).
+- Se diseñó el sistema de encuestas públicas/virales (compartibles en redes, votación anónima, invitación opcional a "Inscribirse" — término elegido para sonar a menos compromiso que "afiliarse"). **Diseño acordado, código pendiente para próxima sesión.**
+- Se diseñó el sistema de comentarios: requieren ser Miembro afiliado y aprobado (no cuenta nueva, no anónimo), con pre-moderación por Publicador/Admin.
+- **Backend**: se instalaron `bcryptjs` y `jsonwebtoken`. Se creó `Usuario.js` (cuentas del panel), `Comentario.js`; se actualizaron `Miembro.js` (+ `passwordHash`) y `Encuesta.js` (+ `creadoPor`). Se creó `middleware/auth.js` (`verifyToken`, `requireRolUsuario`, `requireMiembro`). Se creó `authController`/`authRoutes` (login de Usuario y de Miembro). Se creó `comentarioController`/`comentarioRoutes`. Se protegieron `noticiaRoutes` (create/update/delete requieren Usuario admin/publicador) y se actualizó `encuestaController`/`encuestaRoutes` (crear requiere auth, cerrar respeta dueño salvo admin, votar sigue público). Se creó script `scripts/crearUsuarioAdmin.js` (patrón dry-run + `--confirmar`, igual que en Muvo).
+- **Frontend**: se creó `lib/auth.ts` (sesión en `localStorage`, sin NextAuth). Se creó `/admin/login`, `/admin/layout.tsx` (protección de rutas), `/admin` (dashboard), `/admin/noticias` (listado + publicar/despublicar), `/admin/noticias/nueva` (crear).
+
+**Qué se probó:**
+
+- Usuario admin creado con el script (`mario@laexpansion.do`). ✅
+- Login desde `/admin/login` funcionando, redirección automática a login si no hay sesión. ✅
+- Creación de noticia desde el panel — cae correctamente como `borrador` (comportamiento esperado del modelo, no bug). ✅
+- Botón Publicar/Despublicar en `/admin/noticias` — cambia estado vía `PUT /api/noticias/:id`, y la noticia publicada aparece en `/noticias` (sitio público). ✅
+- Protección de rutas: `POST/PUT/DELETE /api/noticias` ahora exige token de Usuario válido con rol admin/publicador.
+
+**Qué NO se probó todavía:**
+
+- Login de Miembro (`/api/auth/miembro-login`).
+- Sistema de comentarios completo (crear, listar aprobados, bandeja de pendientes, moderar).
+- Cierre de encuestas respetando dueño (`PUT /api/encuestas/:id/cerrar`).
+- Desactivación de cuentas de Usuario (no hay endpoint para esto todavía — falta construirlo).
+- Todo el sistema de encuestas públicas/Inscrito — solo quedó diseñado, no hay código.
+
+**Qué falta / pendiente para próxima sesión:**
+
+- Hacer commit de este bloque en `expansion-backend` y `expansion-frontend` (grande — auth, roles, panel).
+- Construir: endpoint y UI para activar/desactivar cuentas de Usuario (recordar: solo admin desactiva).
+- Construir: registro/login de Miembro desde el frontend público, y flujo de comentarios (form en noticia + bandeja de moderación en el panel).
+- Construir: modelo `Inscrito`, página pública de encuesta compartible, votación anónima con protección `localStorage`, flujo de inscripción opcional post-voto.
+- Construir en el panel: gestión de Miembro (aprobar/rechazar afiliaciones), Voluntario, Evento — actualmente el panel solo tiene Noticias.
+- Agregar edición de noticias existentes (título/contenido) — el panel actual solo permite crear y cambiar estado.
+- Sigue pendiente probar Miembro/Voluntario/Evento/Encuesta (CRUD original) individualmente.
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
+- Decidir: seguir con las piezas pendientes del panel, o pasar a deploy de lo que ya existe.

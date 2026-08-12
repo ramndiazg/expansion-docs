@@ -77,6 +77,20 @@ Sin dark mode automático.
 
 **Pendiente conocido**: el botón "Afíliate" enlaza a `/afiliate`, que aún no existe (404 esperado hasta construir el formulario de membresía).
 
+## Panel admin (frontend)
+
+| Ruta                                | Descripción                                                                   | Estado     |
+| ----------------------------------- | ----------------------------------------------------------------------------- | ---------- |
+| `app/admin/login/page.tsx`          | Login de Usuario, guarda token+datos en `localStorage`                        | ✅ probado |
+| `app/admin/layout.tsx`              | Protege todas las rutas `/admin/*` (excepto login), redirige si no hay sesión | ✅ probado |
+| `app/admin/page.tsx`                | Dashboard simple, saludo + accesos                                            | ✅ probado |
+| `app/admin/noticias/page.tsx`       | Listado de noticias con botón Publicar/Despublicar (`PUT` estado)             | ✅ probado |
+| `app/admin/noticias/nueva/page.tsx` | Formulario de creación (crea como `borrador` por diseño)                      | ✅ probado |
+
+`lib/auth.ts`: helpers de sesión (`guardarSesion`, `obtenerToken`, `obtenerUsuario`, `cerrarSesion`) usando `localStorage` — no se usa NextAuth (decisión de arquitectura previa).
+
+**Aún no construido en el panel**: gestión de Miembro/Voluntario/Evento/Encuesta, bandeja de moderación de comentarios, dashboard de estadísticas real, edición de noticias existentes (solo hay crear + publicar/despublicar, no editar título/contenido).
+
 **Todo el contenido de texto (historia, misión, visión, valores, bio de Mario Díaz, estructura organizativa, eslogan del hero, pilares) es placeholder** y debe reemplazarse con copy real antes de producción — buscar comentarios `{/* PLACEHOLDER: ... */}` en el código para ubicarlos todos.
 
 ## Variables de entorno
@@ -132,6 +146,74 @@ Todos en `expansion-backend/src/models/`.
 | municipio | String | |
 | sectorInteres | String | |
 | estado | enum | `pendiente` \| `aprobado` \| `rechazado` |
+
+**Comentario.js**
+| Campo | Tipo | Notas |
+|---|---|---|
+| noticia | ObjectId → Noticia | requerido |
+| miembro | ObjectId → Miembro | requerido — solo miembros afiliados y aprobados pueden comentar |
+| texto | String | requerido, máx 1000 |
+| estado | enum | `pendiente` \| `aprobado` \| `rechazado` (pre-moderación) |
+
+**Usuario.js** (cuentas del panel — Admin/Publicador)
+| Campo | Tipo | Notas |
+|---|---|---|
+| nombre, email | String | requeridos, email único |
+| passwordHash | String | recibido en texto plano, hasheado con bcrypt en hook `pre('save')` |
+| rol | enum | `admin` \| `publicador` |
+| activo | Boolean | default true — solo **admin** puede desactivar |
+
+**Miembro.js** — actualizado: se agregó `passwordHash` (mismo patrón de hash que Usuario) para permitir login de miembros y así comentar.
+
+**Encuesta.js** — actualizado: se agregó `creadoPor` (ref a Usuario).
+
+## Sistema de roles y permisos
+
+| Acción                             | Publicador                                                  | Admin                                                                             |
+| ---------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| CRUD de noticias                   | ✅                                                          | ✅                                                                                |
+| Crear/cerrar sus propias encuestas | ✅                                                          | ✅ (+ cualquier encuesta, no solo las propias)                                    |
+| Moderar comentarios                | ✅                                                          | ✅                                                                                |
+| Ver dashboard/estadísticas         | —                                                           | ✅                                                                                |
+| Activar cuentas nuevas del panel   | ✅ (cualquiera puede dar de alta, queda activa por defecto) | ✅                                                                                |
+| **Desactivar** cuentas del panel   | ❌                                                          | ✅ (única acción exclusiva de Admin, para no crear cuello de botella en el resto) |
+
+## Autenticación (JWT)
+
+Dos tipos de sesión distintos, mismo mecanismo de token (`JWT_SECRET`, expira en 7 días):
+
+- **Usuario** (panel): `POST /api/auth/login` → `{ id, tipo: 'usuario', rol }`
+- **Miembro** (comentar): `POST /api/auth/miembro-login` → `{ id, tipo: 'miembro' }` — requiere `estado: 'aprobado'`
+
+Middleware en `expansion-backend/src/middleware/auth.js`:
+
+- `verifyToken`: valida el JWT, cuelga el payload en `req.auth`
+- `requireRolUsuario(...roles)`: exige tipo `usuario` y rol específico
+- `requireMiembro`: exige tipo `miembro`
+
+**Frontend**: token + datos de usuario guardados en `localStorage` (`lib/auth.ts`), sin usar NextAuth (decisión previa). `app/admin/layout.tsx` protege todas las rutas `/admin/*` excepto `/admin/login`, redirigiendo si no hay token.
+
+## Encuestas públicas (diseño acordado, pendiente de construir)
+
+- Cada encuesta tendrá una página pública (`/encuestas/[id]` o `[slug]`) compartible en redes.
+- Votación **anónima**, sin cuenta — protección básica contra voto múltiple vía `localStorage` (no infalible, es el estándar para este tipo de encuesta abierta).
+- Tras votar, invitación opcional a **"Inscribirse"** (no "afiliarse" — término elegido deliberadamente para sugerir menos compromiso): nombre, email, teléfono opcional.
+- Requiere modelo nuevo `Inscrito`, distinto de `Miembro` (afiliación formal) y `Voluntario`.
+- **Estado: diseño acordado, código aún no escrito** — construir en próxima sesión.
+
+## Endpoints del backend (actualizado, agregados en esta sesión)
+
+| Método | Ruta                                  | Descripción                                        | Auth                       | Estado        |
+| ------ | ------------------------------------- | -------------------------------------------------- | -------------------------- | ------------- |
+| POST   | `/api/auth/login`                     | Login de Usuario (panel)                           | pública                    | ✅ probado    |
+| POST   | `/api/auth/miembro-login`             | Login de Miembro (comentar)                        | pública                    | ⚠️ sin probar |
+| GET    | `/api/comentarios/noticia/:noticiaId` | Comentarios aprobados de una noticia               | pública                    | ⚠️ sin probar |
+| POST   | `/api/comentarios`                    | Crear comentario                                   | Miembro                    | ⚠️ sin probar |
+| GET    | `/api/comentarios/pendientes`         | Bandeja de moderación                              | Usuario (admin/publicador) | ⚠️ sin probar |
+| PUT    | `/api/comentarios/:id/moderar`        | Aprobar/rechazar comentario                        | Usuario (admin/publicador) | ⚠️ sin probar |
+| PUT    | `/api/encuestas/:id/cerrar`           | Cierra encuesta (propia, o cualquiera si es admin) | Usuario (admin/publicador) | ⚠️ sin probar |
+
+**Noticias**: `POST`/`PUT`/`DELETE` ahora requieren token de Usuario con rol admin o publicador — confirmado con la prueba end-to-end del panel (crear + publicar/despublicar).
 
 **Voluntario.js**
 | Campo | Tipo | Notas |
