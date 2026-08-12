@@ -123,11 +123,12 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 - Afiliación de miembros (con selects geográficos reales) + aprobación desde el panel
 - Comentarios en noticias (solo Miembros aprobados) + moderación desde el panel
 - Menú de cuenta (UserMenu) dinámico en el sitio público
+- Cambio de contraseña (Usuario y Miembro, mismo endpoint)
+- Área de Miembro (`/cuenta`): contraseña + comentarios propios (votos pendiente de encuestas)
 
 **Pendiente para continuar la Fase 1** (ver detalle completo en `ARQUITECTURA.md` → "Aún no construido"):
 
-- Área de Miembro (`/cuenta`)
-- Activar/desactivar cuentas de Usuario + cambio de contraseña por Admin
+- Activar/desactivar cuentas de Usuario
 - Encuestas (código, con la restricción de solo-Miembro-vota)
 - Gestión de Voluntario/Evento en el panel (y decidir si proteger esas rutas del backend)
 - Edición de noticias existentes

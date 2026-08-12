@@ -331,3 +331,52 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 - Agregar edición de noticias existentes.
 - Sigue pendiente probar Voluntario/Evento/Encuesta (CRUD original) individualmente.
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
+
+---
+
+### 2026-08-11 — Sesión 12 (parte 1): Limpieza completa de documentos de contexto
+
+**Qué se hizo:**
+
+- Reescritura completa de `ARQUITECTURA.md`: eliminadas dos secciones duplicadas de "Endpoints del backend", modelos de datos consolidados en un solo lugar (antes repartidos en dos), estructura de carpetas actualizada (reflejaba sesión 1, congelada con `models/`, `controllers/`, etc. "vacío aún").
+- Se detectaron dos pendientes reales durante la limpieza (no solo de documentación):
+  - `POST /api/encuestas/:id/votar/:opcionId` sigue público en el código, pero la decisión de sesión 11 exige sesión de Miembro — desactualizado, falta corregir el código.
+  - `/api/voluntarios` y `/api/eventos` nunca se protegieron con roles (a diferencia de noticias/miembros/comentarios) — quedaron así desde sesión 3-4.
+- Se corrigió la sección "Fase actual" de `CONTEXTO_PROYECTO.md`, que seguía describiendo la Fase 0 (sesión 1) sin reflejar nada de lo construido después.
+- Se corrigió la ruta de referencia al inicio de los tres documentos (decían `la-expansion/`, debía ser `la-expansion-docs/` desde que se separó el repo de docs en sesión 1).
+
+**Qué se probó:** No aplica — sesión de limpieza documental, sin cambios de código.
+
+**Qué falta:** Commit de los tres documentos en `la-expansion-docs`.
+
+---
+
+### 2026-08-11 — Sesión 12 (parte 2): Cambio de contraseña (Usuario y Miembro) + área de Miembro
+
+**Qué se hizo:**
+
+- Se creó `PUT /api/auth/cambiar-password` (backend): un solo endpoint sirve para Usuario y Miembro, detecta el tipo por `req.auth.tipo`, valida contraseña actual con bcrypt antes de permitir el cambio.
+- Se creó `GET /api/comentarios/mios` (Miembro): lista los comentarios propios en cualquier estado (no solo aprobados).
+- Se creó `app/cuenta/page.tsx`: área de Miembro con tres secciones — cambiar contraseña (funcional), mis comentarios (funcional, con estado visible), mis votos en encuestas (placeholder "Próximamente", bloqueado hasta construir encuestas).
+- Se creó `app/admin/perfil/page.tsx`: cambiar contraseña para Usuario (Admin/Publicador), mismo endpoint que Miembro.
+- Se actualizó `UserMenu.tsx` para soportar múltiples links por tipo de cuenta (antes uno solo): Usuario ahora ve "Panel admin" + "Mi perfil"; Miembro ve "Mi cuenta".
+- Se descubrió que el link "Mi perfil" en `UserMenu` casi nunca es visible para un Usuario en la práctica, porque `UserMenu` vive en el `Navbar` público, que `SiteChrome` excluye dentro de `/admin/*` (donde el Usuario pasa la mayoría del tiempo). Se agregó el acceso real a "Mi perfil" directo en el header propio de `app/admin/layout.tsx`.
+
+**Qué se probó:**
+
+- Cambio de contraseña como Miembro, cierre de sesión y login con la nueva contraseña. ✅
+- Cambio de contraseña como Usuario (Mario) desde `/admin/perfil`. ✅
+- `/cuenta` muestra comentarios propios con su estado correctamente. ✅
+- Acceso a "Mi perfil" desde el header del panel admin. ✅
+
+**Qué falta / pendiente para próxima sesión:**
+
+- Hacer commit de este bloque completo (backend: cambiar-password + comentarios/mios; frontend: /cuenta, /admin/perfil, UserMenu, admin/layout).
+- Corregir código: `POST /api/encuestas/:id/votar/:opcionId` debe requerir Miembro (detectado en la limpieza de docs, sigue sin corregir).
+- Proteger `/api/voluntarios` y `/api/eventos` con roles, o decidir explícitamente que se quedan abiertos.
+- Construir: endpoint y UI para activar/desactivar cuentas de Usuario.
+- Construir: encuestas (código completo, solo Miembros votan).
+- Construir en el panel: gestión de Voluntario, Evento.
+- Agregar edición de noticias existentes.
+- Sigue pendiente probar Voluntario/Evento/Encuesta (CRUD original) individualmente.
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).

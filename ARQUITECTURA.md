@@ -252,17 +252,29 @@ Token expira en 7 días (`JWT_SECRET` en `.env`).
 | `app/admin/noticias/nueva/page.tsx` | Crear noticia (queda en `borrador`)                             | ✅ probado |
 | `app/admin/comentarios/page.tsx`    | Bandeja de moderación — aprobar/rechazar                        | ✅ probado |
 | `app/admin/miembros/page.tsx`       | Solicitudes de afiliación, filtro por estado, aprobar/rechazar  | ✅ probado |
+| `app/admin/perfil/page.tsx`         | Cambiar contraseña propia (Usuario)                             | ✅ probado |
 
-**Aún no construido en el panel**: gestión de Voluntario/Evento/Encuesta, dashboard de estadísticas real, edición de noticias existentes (solo crear + cambiar estado), activar/desactivar cuentas de Usuario, cambio de contraseña por Admin.
+**Aún no construido en el panel**: gestión de Voluntario/Evento/Encuesta, dashboard de estadísticas real, edición de noticias existentes (solo crear + cambiar estado), activar/desactivar cuentas de Usuario.
+
+## Área de Miembro (`/cuenta`)
+
+`app/cuenta/page.tsx`: protegida (redirige a `/login` si no hay sesión de Miembro). Tres secciones:
+
+- **Cambiar contraseña** — funcional, mismo endpoint que usa Usuario.
+- **Mis comentarios** — lista todos los comentarios propios (cualquier estado: pendiente/aprobado/rechazado) con link a la noticia.
+- **Mis votos en encuestas** — placeholder "Próximamente", bloqueado hasta construir el sistema de encuestas.
 
 ## Menú de cuenta (UserMenu)
 
-`components/UserMenu.tsx`: detecta sesión de Usuario o Miembro y muestra menú contextual.
+`components/UserMenu.tsx`: detecta sesión de Usuario o Miembro y muestra menú contextual con **múltiples links** por tipo (`linksPara()`):
+
+- Usuario: "Panel admin" (`/admin`) + "Mi perfil" (`/admin/perfil`)
+- Miembro: "Mi cuenta" (`/cuenta`)
+
+**Importante**: `UserMenu` vive dentro de `Navbar`, que `SiteChrome` excluye dentro de `/admin/*`. Por eso el link "Mi perfil" para Usuario en la práctica casi no se ve ahí — el usuario ya está dentro del panel la mayoría del tiempo. El acceso real a "Mi perfil" para Usuario se agregó directo en el header propio de `app/admin/layout.tsx` (junto a nombre/rol y "Cerrar sesión"), no depende de `UserMenu` cuando ya estás en `/admin`. `UserMenu` sí es la única vía si un Usuario navega por el sitio público estando logueado.
 
 - **`desktop`**: círculo con iniciales + dropdown flotante, se cierra al hacer clic fuera.
-- **`mobile`**: sin dropdown flotante — opciones en línea dentro del menú hamburguesa ya expandido (un `absolute` anidado rompía el layout).
-
-Muestra: nombre + tipo de cuenta, link contextual (`/admin` si Usuario, `/cuenta` si Miembro — **`/cuenta` no existe aún, da 404**), y "Cerrar sesión".
+- **`mobile`**: sin dropdown flotante — opciones en línea dentro del menú hamburguesa ya expandido.
 
 ## Encuestas (diseño actualizado, código pendiente)
 
@@ -283,29 +295,31 @@ Usado en `/afiliate`: selects dependientes provincia→municipio, el municipio s
 
 ## Endpoints del backend
 
-| Método              | Ruta                                       | Descripción                              | Auth                                                                                                         | Estado                                  |
-| ------------------- | ------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
-| GET                 | `/api/health`                              | Server + conexión DB activos             | pública                                                                                                      | ✅ probado                              |
-| GET                 | `/api/noticias`                            | Lista (filtros `?estado=` `?categoria=`) | pública                                                                                                      | ✅ probado                              |
-| GET                 | `/api/noticias/:slug`                      | Una noticia por slug                     | pública                                                                                                      | ✅ probado                              |
-| POST                | `/api/noticias`                            | Crear                                    | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
-| PUT                 | `/api/noticias/:id`                        | Actualizar                               | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
-| DELETE              | `/api/noticias/:id`                        | Eliminar                                 | Usuario (admin/publicador)                                                                                   | ⚠️ patrón replicado, sin probar directo |
-| POST                | `/api/miembros`                            | Afiliarse                                | pública                                                                                                      | ✅ probado                              |
-| GET                 | `/api/miembros`                            | Listar (datos sensibles)                 | **Admin únicamente**                                                                                         | ✅ probado                              |
-| GET                 | `/api/miembros/:id`                        | Uno                                      | Admin                                                                                                        | ⚠️ sin probar directo                   |
-| PUT                 | `/api/miembros/:id`                        | Aprobar/rechazar/editar                  | Admin                                                                                                        | ✅ probado                              |
-| DELETE              | `/api/miembros/:id`                        | Eliminar                                 | Admin                                                                                                        | ⚠️ sin probar                           |
-| GET/POST/PUT/DELETE | `/api/voluntarios`, `/api/voluntarios/:id` | CRUD voluntariado                        | — (sin proteger todavía)                                                                                     | ⚠️ sin probar                           |
-| GET/POST/PUT/DELETE | `/api/eventos`, `/api/eventos/:id`         | CRUD eventos                             | — (sin proteger todavía)                                                                                     | ⚠️ sin probar                           |
-| GET/POST/DELETE     | `/api/encuestas`, `/api/encuestas/:id`     | CRUD encuestas                           | POST: Usuario                                                                                                | ⚠️ sin probar                           |
-| POST                | `/api/encuestas/:id/votar/:opcionId`       | Votar                                    | pública en el código actual — **desactualizado**, debe pasar a requerir Miembro por la decisión de sesión 11 | ⚠️ pendiente actualizar código          |
-| PUT                 | `/api/encuestas/:id/cerrar`                | Cerrar (propia o cualquiera si admin)    | Usuario                                                                                                      | ⚠️ sin probar                           |
-| POST                | `/api/auth/login`                          | Login unificado                          | pública                                                                                                      | ✅ probado                              |
-| GET                 | `/api/comentarios/noticia/:noticiaId`      | Comentarios aprobados                    | pública                                                                                                      | ✅ probado                              |
-| POST                | `/api/comentarios`                         | Crear comentario                         | Miembro                                                                                                      | ✅ probado                              |
-| GET                 | `/api/comentarios/pendientes`              | Bandeja de moderación                    | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
-| PUT                 | `/api/comentarios/:id/moderar`             | Aprobar/rechazar                         | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
+| Método              | Ruta                                       | Descripción                                                                | Auth                                                                                                         | Estado                                  |
+| ------------------- | ------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| GET                 | `/api/health`                              | Server + conexión DB activos                                               | pública                                                                                                      | ✅ probado                              |
+| GET                 | `/api/noticias`                            | Lista (filtros `?estado=` `?categoria=`)                                   | pública                                                                                                      | ✅ probado                              |
+| GET                 | `/api/noticias/:slug`                      | Una noticia por slug                                                       | pública                                                                                                      | ✅ probado                              |
+| POST                | `/api/noticias`                            | Crear                                                                      | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
+| PUT                 | `/api/noticias/:id`                        | Actualizar                                                                 | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
+| DELETE              | `/api/noticias/:id`                        | Eliminar                                                                   | Usuario (admin/publicador)                                                                                   | ⚠️ patrón replicado, sin probar directo |
+| POST                | `/api/miembros`                            | Afiliarse                                                                  | pública                                                                                                      | ✅ probado                              |
+| GET                 | `/api/miembros`                            | Listar (datos sensibles)                                                   | **Admin únicamente**                                                                                         | ✅ probado                              |
+| GET                 | `/api/miembros/:id`                        | Uno                                                                        | Admin                                                                                                        | ⚠️ sin probar directo                   |
+| PUT                 | `/api/miembros/:id`                        | Aprobar/rechazar/editar                                                    | Admin                                                                                                        | ✅ probado                              |
+| DELETE              | `/api/miembros/:id`                        | Eliminar                                                                   | Admin                                                                                                        | ⚠️ sin probar                           |
+| GET/POST/PUT/DELETE | `/api/voluntarios`, `/api/voluntarios/:id` | CRUD voluntariado                                                          | — (sin proteger todavía)                                                                                     | ⚠️ sin probar                           |
+| GET/POST/PUT/DELETE | `/api/eventos`, `/api/eventos/:id`         | CRUD eventos                                                               | — (sin proteger todavía)                                                                                     | ⚠️ sin probar                           |
+| GET/POST/DELETE     | `/api/encuestas`, `/api/encuestas/:id`     | CRUD encuestas                                                             | POST: Usuario                                                                                                | ⚠️ sin probar                           |
+| POST                | `/api/encuestas/:id/votar/:opcionId`       | Votar                                                                      | pública en el código actual — **desactualizado**, debe pasar a requerir Miembro por la decisión de sesión 11 | ⚠️ pendiente actualizar código          |
+| PUT                 | `/api/encuestas/:id/cerrar`                | Cerrar (propia o cualquiera si admin)                                      | Usuario                                                                                                      | ⚠️ sin probar                           |
+| POST                | `/api/auth/login`                          | Login unificado                                                            | pública                                                                                                      | ✅ probado                              |
+| PUT                 | `/api/auth/cambiar-password`               | Cambiar contraseña propia (Usuario o Miembro, detecta tipo por `req.auth`) | Usuario o Miembro (cualquiera autenticado)                                                                   | ✅ probado (ambos tipos)                |
+| GET                 | `/api/comentarios/noticia/:noticiaId`      | Comentarios aprobados                                                      | pública                                                                                                      | ✅ probado                              |
+| GET                 | `/api/comentarios/mios`                    | Comentarios propios (cualquier estado)                                     | Miembro                                                                                                      | ✅ probado                              |
+| POST                | `/api/comentarios`                         | Crear comentario                                                           | Miembro                                                                                                      | ✅ probado                              |
+| GET                 | `/api/comentarios/pendientes`              | Bandeja de moderación                                                      | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
+| PUT                 | `/api/comentarios/:id/moderar`             | Aprobar/rechazar                                                           | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
 
 **Nota importante**: `POST /api/encuestas/:id/votar/:opcionId` en el código actual sigue siendo público (como se diseñó en sesión 8), pero la decisión de sesión 11 dice que debe requerir sesión de Miembro. Este endpoint necesita actualizarse para reflejar la decisión — anotado como pendiente real, no solo diseño.
 
