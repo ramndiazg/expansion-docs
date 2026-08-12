@@ -1,6 +1,6 @@
 # HISTORIAL_MODIFICACIONES.md
 
-Ruta destino en el repo: `la-expansion/HISTORIAL_MODIFICACIONES.md`
+Ruta destino en el repo: `la-expansion-docs/HISTORIAL_MODIFICACIONES.md`
 
 ## Regla de uso (leer antes de cada sesión)
 
@@ -292,5 +292,42 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 - Construir en el panel: gestión de Miembro (aprobar/rechazar — ahora mismo se hace solo por curl), Voluntario, Evento.
 - Agregar edición de noticias existentes.
 - Decidir si corregir las inconsistencias de nombres en el dataset geográfico ("Baoruco"/"Bahoruco", "Sanchez"/"Sánchez Ramírez").
+- Sigue pendiente probar Voluntario/Evento/Encuesta (CRUD original) individualmente.
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
+
+---
+
+### 2026-08-11 — Sesión 11: Gestión de miembros, moderación de comentarios, UserMenu
+
+**Qué se hizo:**
+
+- Se registraron decisiones: encuestas solo votables por Miembro (se descarta `Inscrito`/voto anónimo de sesión 8); estructura de paneles aclarada (Admin+Publicador comparten `/admin`, Miembro tendrá `/cuenta` propia); Admin podrá cambiar contraseñas; recuperación por correo queda para cuando se resuelva el servicio de email — todo esto anotado en `CONTEXTO_PROYECTO.md`, sin construir todavía salvo lo de encuestas (que solo afecta diseño futuro).
+- **Seguridad**: se descubrió que `GET /api/miembros` había quedado público desde sesión 8 — se corrigió, ahora solo Admin.
+- Se creó `app/admin/comentarios/page.tsx` (bandeja de moderación) y `app/admin/miembros/page.tsx` (aprobar/rechazar afiliaciones con filtro por estado).
+- Se corrigió bug: el botón "Aprobar" de comentarios usaba un token de color (`bg-teal`) que ya no existe en la paleta — quedaba sin estilo visible.
+- Se corrigió bug: mismo patrón de `setState` síncrono en `useEffect` en `Navbar.tsx`.
+- Se descubrió y corrigió: el Navbar público se renderizaba superpuesto encima del panel admin (ambos vienen del layout raíz). Se creó `components/SiteChrome.tsx` para excluir Navbar/Footer dentro de `/admin/*`.
+- Se reemplazó el texto plano "Iniciar sesión"/nombre en el Navbar por `components/UserMenu.tsx`: círculo con iniciales + dropdown (desktop), variante en línea sin dropdown flotante para móvil (el dropdown absoluto anidado rompía el layout del menú hamburguesa). Detecta sesión de Usuario o Miembro y muestra opciones contextuales.
+- Se extendió `lib/auth.ts` con el mismo sistema de eventos de sesión que ya tenía `lib/authMiembro.ts`, para que el Navbar reaccione en vivo también a login/logout de Usuario.
+- El botón "Afíliate" ahora es condicional: oculto si hay cualquier sesión activa.
+
+**Qué se probó:**
+
+- Bandeja de comentarios pendientes — aprobar/rechazar funcionando, botón con color correcto. ✅
+- Gestión de miembros — filtros por estado, aprobar/rechazar. ✅
+- Navbar reacciona en vivo a login/logout sin recargar (Usuario y Miembro). ✅
+- Panel admin ya no muestra el Navbar público superpuesto. ✅
+- Dropdown de cuenta en desktop y variante móvil sin romper layout. ✅
+- Botón Afíliate oculto correctamente con sesión activa. ✅
+
+**Qué falta / pendiente para próxima sesión:**
+
+- Hacer commit de este bloque (backend: fix de seguridad en miembros; frontend: todo lo anterior).
+- Construir `/cuenta` (área de Miembro): cambiar contraseña, ver encuestas votadas, ver noticias comentadas — el link ya existe en el UserMenu pero da 404.
+- Construir: endpoint y UI para activar/desactivar cuentas de Usuario, y cambio de contraseña por Admin.
+- Construir: modelo `Inscrito` — **ya no aplica**, decisión revertida (ver arriba). Actualizar cualquier referencia futura a este modelo como descartada.
+- Construir: encuestas públicas (ahora solo para Miembros, diseño simplificado respecto a sesión 8).
+- Construir en el panel: gestión de Voluntario, Evento.
+- Agregar edición de noticias existentes.
 - Sigue pendiente probar Voluntario/Evento/Encuesta (CRUD original) individualmente.
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).

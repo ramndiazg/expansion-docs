@@ -1,173 +1,139 @@
 # ARQUITECTURA.md
 
-Ruta destino en el repo: `la-expansion/ARQUITECTURA.md`
+Ruta destino en el repo: `la-expansion-docs/ARQUITECTURA.md`
 
-> Este documento describe la estructura técnica real del proyecto. Se actualiza cada vez que cambia algo estructural: carpetas, endpoints, esquemas, variables de entorno, dependencias clave.
+> Este documento describe la estructura técnica real del proyecto. Se actualiza cada vez que cambia algo estructural: carpetas, endpoints, esquemas, variables de entorno, dependencias clave. Última reescritura completa: 2026-08-11 (sesión 11), para eliminar contenido duplicado/desactualizado acumulado en sesiones anteriores.
 
 ## Stack
 
-| Capa          | Tecnología        | Deploy |
-| ------------- | ----------------- | ------ |
-| Frontend      | Next.js           | Vercel |
-| Backend       | Node.js + Express | Render |
-| Base de datos | MongoDB Atlas     | —      |
-| CI/CD         | GitHub Actions    | —      |
+| Capa          | Tecnología                                         | Deploy                     |
+| ------------- | -------------------------------------------------- | -------------------------- |
+| Frontend      | Next.js (App Router, TypeScript, Tailwind v4)      | Vercel (aún no desplegado) |
+| Backend       | Node.js + Express                                  | Render (aún no desplegado) |
+| Base de datos | MongoDB Atlas (tier Free/M0)                       | —                          |
+| Auth          | JWT propio (bcryptjs + jsonwebtoken), sin NextAuth | —                          |
+| CI/CD         | GitHub Actions                                     | pendiente de configurar    |
 
-## Estructura de carpetas (estado real, confirmado 2026-08-09)
+## Estructura de repos y carpetas (estado real, 2026-08-11)
+
+Tres repos independientes en GitHub (usuario `ramndiazg`):
 
 ```
-la-expansion/
-├── CONTEXTO_PROYECTO.md
-├── ARQUITECTURA.md
-├── HISTORIAL_MODIFICACIONES.md
-├── expansion-backend/
-│   ├── src/
-│   │   ├── models/       (vacío aún — esquemas Mongoose)
-│   │   ├── controllers/  (vacío aún)
-│   │   ├── routes/       (vacío aún)
-│   │   ├── middleware/   (vacío aún)
-│   │   └── server.js     ✅ creado y funcionando
-│   ├── .env              (no versionado — ver .gitignore)
-│   ├── .env.example      ✅
-│   ├── .gitignore        ✅
-│   └── package.json      ✅ (scripts start/dev, main actualizado)
+la-expansion/                          (carpeta local, no es un repo en sí)
+├── la-expansion-docs/                 → github.com/ramndiazg/la-expansion-docs
+│   ├── CONTEXTO_PROYECTO.md
+│   ├── ARQUITECTURA.md
+│   └── HISTORIAL_MODIFICACIONES.md
 │
-└── expansion-frontend/
-    └── (scaffold default de create-next-app, aún sin tocar)
+├── expansion-backend/                 → github.com/ramndiazg/expansion-backend
+│   ├── src/
+│   │   ├── models/
+│   │   │   ├── Noticia.js
+│   │   │   ├── Miembro.js
+│   │   │   ├── Voluntario.js
+│   │   │   ├── Evento.js
+│   │   │   ├── Encuesta.js
+│   │   │   ├── Usuario.js
+│   │   │   └── Comentario.js
+│   │   ├── controllers/
+│   │   │   ├── noticiaController.js
+│   │   │   ├── miembroController.js
+│   │   │   ├── voluntarioController.js
+│   │   │   ├── eventoController.js
+│   │   │   ├── encuestaController.js
+│   │   │   ├── authController.js
+│   │   │   └── comentarioController.js
+│   │   ├── routes/
+│   │   │   ├── noticiaRoutes.js
+│   │   │   ├── miembroRoutes.js
+│   │   │   ├── voluntarioRoutes.js
+│   │   │   ├── eventoRoutes.js
+│   │   │   ├── encuestaRoutes.js
+│   │   │   ├── authRoutes.js
+│   │   │   └── comentarioRoutes.js
+│   │   ├── middleware/
+│   │   │   └── auth.js
+│   │   └── server.js
+│   ├── scripts/
+│   │   └── crearUsuarioAdmin.js
+│   ├── .env                          (no versionado)
+│   ├── .env.example
+│   ├── .gitignore
+│   └── package.json
+│
+└── expansion-frontend/                → github.com/ramndiazg/expansion-frontend
+    ├── app/
+    │   ├── page.tsx                   (Inicio)
+    │   ├── layout.tsx
+    │   ├── globals.css
+    │   ├── login/page.tsx
+    │   ├── afiliate/page.tsx
+    │   ├── sobre-el-movimiento/page.tsx
+    │   ├── liderazgo/page.tsx
+    │   ├── noticias/
+    │   │   ├── page.tsx                (listado)
+    │   │   └── [slug]/page.tsx         (detalle)
+    │   └── admin/
+    │       ├── layout.tsx              (protección de rutas)
+    │       ├── page.tsx                (dashboard)
+    │       ├── noticias/
+    │       │   ├── page.tsx
+    │       │   └── nueva/page.tsx
+    │       ├── comentarios/page.tsx
+    │       └── miembros/page.tsx
+    ├── components/
+    │   ├── Navbar.tsx
+    │   ├── Footer.tsx
+    │   ├── SiteChrome.tsx
+    │   ├── UserMenu.tsx
+    │   └── Comentarios.tsx
+    ├── lib/
+    │   ├── auth.ts                    (sesión de Usuario)
+    │   ├── authMiembro.ts             (sesión de Miembro)
+    │   └── provinciasMunicipios.ts    (datos geográficos RD)
+    ├── .env.local                     (no versionado)
+    └── package.json
 ```
 
-Nota: `expansion-frontend` usa **App Router**, TypeScript, sin carpeta `src/` (todo vive directo en `app/`). Confirmado 2026-08-10.
+**Pendiente de crear**: `app/cuenta/` (área de Miembro — cambiar contraseña, ver votos/comentarios), páginas de gestión de Voluntario/Evento/Encuesta en el panel, edición de noticias existentes.
 
-## Sistema de diseño (v2 — actualizado 2026-08-10)
+## Sistema de diseño
 
 **Principio: mobile-first.** El tráfico esperado es mayoritariamente desde móvil — todo bloque nuevo debe diseñarse y probarse primero en viewport angosto.
 
-**Paleta:**
+**Paleta** (definida en `app/globals.css`, tokens vía `@theme inline` de Tailwind v4):
 | Token | Hex | Uso |
 |---|---|---|
 | `--ink` | `#101828` | Texto principal, fondo del hero/footer |
 | `--ink-soft` | `#1D2939` | Bloques placeholder, acentos oscuros secundarios |
-| `--blue` | `#4E7FDB` | Acento primario (CTAs, labels destacados) — versión suave, no saturado |
+| `--blue` | `#4E7FDB` | Acento primario (CTAs, labels destacados) |
 | `--slate` | `#64748B` | Acento secundario (bordes, detalles) |
 | fondo | `#FFFFFF` (blanco nativo) | Fondo base |
 
 Sin dark mode automático.
 
-**Tipografía**: Space Grotesk (display, títulos) + Inter (body) — 100% sans-serif, reemplazó a Fraunces por sentirse "anticuado" combinado con la paleta anterior.
+**Tipografía**: Space Grotesk (display, títulos) + Inter (body), 100% sans-serif.
 
 **Elemento de firma**: motivo de anillos concéntricos (SVG) en el hero del Home.
 
-**Navegación**: menú hamburguesa en móvil (`components/Navbar.tsx`, `"use client"`, estado `open` con `useState`), menú horizontal en desktop (`md:flex`).
+**Personalismo del líder**: Mario Díaz tiene presencia en el hero del Home ("Liderado por Mario Díaz, Secretario General"), no solo en `/liderazgo`.
 
-**Personalismo del líder**: Mario Díaz debe tener presencia visible fuera de la página de Liderazgo — implementado en el hero del Home (línea "Liderado por Mario Díaz, Secretario General" con avatar placeholder).
-
-## Frontend — páginas y estado
-
-| Página              | Ruta                               | Descripción                                                                                             | Estado         |
-| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------- |
-| Inicio              | `app/page.tsx`                     | Hero con anillos SVG + fetch a `/api/health` _(ver nota)_ + sección de pilares (placeholder)            | ✅ funcionando |
-| Sobre el movimiento | `app/sobre-el-movimiento/page.tsx` | Historia, misión, visión, valores — **todo contenido placeholder**                                      | ✅ funcionando |
-| Liderazgo           | `app/liderazgo/page.tsx`           | Bio de Mario Díaz + estructura organizativa — **todo contenido placeholder**                            | ✅ funcionando |
-| Noticias (listado)  | `app/noticias/page.tsx`            | Server component, fetch a `/api/noticias?estado=publicado`, tarjetas con categoría/título/resumen/fecha | ✅ funcionando |
-| Noticias (detalle)  | `app/noticias/[slug]/page.tsx`     | Server component, fetch a `/api/noticias/:slug`, `notFound()` si no existe                              | ✅ funcionando |
-
-**Nota**: el `app/page.tsx` de esta sesión reemplazó la versión que hacía fetch a `/api/health` (sesión 5) por la versión con hero de marca. El check de salud del backend ya no es visible en Home — si se necesita, se debe reintegrar deliberadamente (ej. en una futura página de estado/diagnóstico), no en la página pública.
-
-**Componentes compartidos**: `components/Navbar.tsx` (logo + enlaces + botón Afíliate), `components/Footer.tsx`. Ambos registrados en `app/layout.tsx`.
-
-**Pendiente conocido**: el botón "Afíliate" enlaza a `/afiliate`, que aún no existe (404 esperado hasta construir el formulario de membresía).
-
-## Panel admin (frontend)
-
-| Ruta                                | Descripción                                                                   | Estado     |
-| ----------------------------------- | ----------------------------------------------------------------------------- | ---------- |
-| `app/admin/login/page.tsx`          | Login de Usuario, guarda token+datos en `localStorage`                        | ✅ probado |
-| `app/admin/layout.tsx`              | Protege todas las rutas `/admin/*` (excepto login), redirige si no hay sesión | ✅ probado |
-| `app/admin/page.tsx`                | Dashboard simple, saludo + accesos                                            | ✅ probado |
-| `app/admin/noticias/page.tsx`       | Listado de noticias con botón Publicar/Despublicar (`PUT` estado)             | ✅ probado |
-| `app/admin/noticias/nueva/page.tsx` | Formulario de creación (crea como `borrador` por diseño)                      | ✅ probado |
-| `app/admin/comentarios/page.tsx`    | Bandeja de moderación: aprobar/rechazar comentarios pendientes                | ✅ probado |
-| `app/admin/miembros/page.tsx`       | Listado de solicitudes de afiliación con filtro por estado, aprobar/rechazar  | ✅ probado |
-
-`lib/auth.ts`: helpers de sesión (`guardarSesion`, `obtenerToken`, `obtenerUsuario`, `cerrarSesion`) usando `localStorage` — no se usa NextAuth (decisión de arquitectura previa).
-
-**Aún no construido en el panel**: gestión de Voluntario/Evento/Encuesta, dashboard de estadísticas real, edición de noticias existentes (solo hay crear + publicar/despublicar, no editar título/contenido), activar/desactivar cuentas de Usuario, cambio de contraseña por Admin.
-
-## Menú de cuenta (UserMenu)
-
-`components/UserMenu.tsx`: detecta si hay sesión de Usuario o de Miembro (ambas comparten Navbar, son sistemas independientes) y muestra un menú de cuenta unificado. Dos variantes:
-
-- **`desktop`**: círculo con iniciales + dropdown flotante (`position: absolute`), se cierra al hacer clic fuera.
-- **`mobile`**: sin dropdown flotante — dentro del menú hamburguesa ya expandido, las opciones se muestran en línea directamente (evita el bug de superposición/layout roto que da un `absolute` anidado dentro de otro menú ya abierto).
-
-Cada variante muestra: nombre + tipo de cuenta, un link contextual (`/admin` si es Usuario, `/cuenta` si es Miembro — **`/cuenta` aún no existe**, da 404 hasta construir el área de miembro), y "Cerrar sesión".
-
-`lib/auth.ts` se actualizó para seguir el mismo patrón de eventos que `lib/authMiembro.ts` (`alCambiarSesionUsuario`, dispara evento en `guardarSesion`/`cerrarSesion`) — necesario para que el Navbar reaccione a cambios de sesión de Usuario en tiempo real, igual que ya hacía con Miembro.
-
-`components/SiteChrome.tsx`: envuelve `Navbar`/`Footer` condicionalmente — no se muestran dentro de `/admin/*`, ya que el panel tiene su propio header. Se agregó tras detectar que ambos headers aparecían superpuestos.
-
-El botón "Afíliate" en el Navbar ahora es condicional: no se muestra si hay cualquier sesión activa (Usuario o Miembro).
-
-## Datos geográficos (provincias/municipios)
-
-`expansion-frontend/lib/provinciasMunicipios.ts`: 32 provincias (31 + Distrito Nacional), 158 municipios, agrupados como `Record<string, string[]>`. Fuente: dataset público `DannyFeliz/Datos-Rep-Dom` (GitHub, actualizado 2023) — se descargó y combinó vía script, no se escribió a mano, para evitar errores de nombres.
-
-**Inconsistencias conocidas del dataset fuente** (no corregidas, a decidir si importan):
-
-- "Baoruco" en vez de "Bahoruco"
-- "Sanchez Ramírez" sin tilde en la primera "a"
-
-Usado en `app/afiliate/page.tsx`: selects dependientes (provincia → municipio), el municipio se resetea al cambiar de provincia y el select queda deshabilitado hasta elegir provincia.
-
-## Páginas públicas nuevas (frontend)
-
-| Página          | Ruta                    | Descripción                                                                       | Estado     |
-| --------------- | ----------------------- | --------------------------------------------------------------------------------- | ---------- |
-| Login unificado | `app/login/page.tsx`    | Un solo form, redirige según tipo de cuenta devuelto por el backend               | ✅ probado |
-| Afiliación      | `app/afiliate/page.tsx` | Formulario de Miembro, selects de provincia/municipio, confirmación de contraseña | ✅ probado |
-
-`components/Comentarios.tsx`: sección de comentarios en el detalle de noticia — lista aprobados (público), formulario solo visible si hay sesión de Miembro, mensaje de "inicia sesión" si no. Comentario nuevo entra como `pendiente` (no aparece hasta ser moderado — moderación aún sin UI).
-
-`lib/authMiembro.ts`: helpers de sesión de Miembro en `localStorage`, paralelo a `lib/auth.ts` mismo patrón.
-
-**Todo el contenido de texto (historia, misión, visión, valores, bio de Mario Díaz, estructura organizativa, eslogan del hero, pilares) es placeholder** y debe reemplazarse con copy real antes de producción — buscar comentarios `{/* PLACEHOLDER: ... */}` en el código para ubicarlos todos.
-
-## Variables de entorno
-
-**expansion-backend/.env** (real, valores no documentados aquí por seguridad — solo la forma)
-
-```
-PORT=4000
-MONGODB_URI=mongodb+srv://<usuario>:<password>@cluster0.xxxxx.mongodb.net/la-expansion?retryWrites=true&w=majority
-CORS_ORIGIN=http://localhost:3000
-```
-
-**expansion-frontend/.env.local**
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:4000
-```
-
-## Infraestructura desplegada
-
-- **MongoDB Atlas**: cluster `Cluster0`, tier **Free (M0)**, proveedor AWS, región `us-east-1` (N. Virginia). Network Access: `0.0.0.0/0` (allow anywhere) — necesario porque Render (plan free) no tiene IP fija.
-- **Backend**: corriendo localmente en `localhost:4000`, aún no desplegado a Render.
-- **Frontend**: corriendo localmente en `localhost:3000`, conectado exitosamente al backend vía `/api/health`. Aún no desplegado a Vercel.
+**Contenido placeholder pendiente**: historia, misión, visión, valores, bio de Mario Díaz, estructura organizativa, eslogan del hero, pilares del Home — todo marcado con comentarios `{/* PLACEHOLDER: ... */}` en el código, a reemplazar con copy real antes de producción.
 
 ## Modelos de datos (Mongoose)
 
-Todos en `expansion-backend/src/models/`.
+Todos en `expansion-backend/src/models/`. Todos incluyen `timestamps: true`.
 
 **Noticia.js**
 | Campo | Tipo | Notas |
 |---|---|---|
 | titulo | String | requerido |
-| slug | String | único, autogenerado del título si no se envía |
-| resumen | String | requerido, máx 300 caracteres |
-| contenido | String | requerido |
+| slug | String | único, autogenerado del título si no se envía (hook `pre('validate')`, sin `next` — ver notas técnicas) |
+| resumen | String | requerido, máx 300 |
+| contenido | String | requerido (texto plano; editor enriquecido queda para más adelante) |
 | imagenDestacada | String | URL |
-| imagenesAdicionales | [String] | URLs de fotos adicionales — ⚠️ agregado 2026-08-10, sin probar |
-| videoUrl | String | Link de YouTube, se convierte a embed en el frontend — ⚠️ agregado 2026-08-10, sin probar |
+| imagenesAdicionales | [String] | URLs de galería — sin probar en la práctica más allá del diseño |
+| videoUrl | String | link de YouTube, se convierte a embed en el frontend — sin probar en la práctica |
 | categoria | enum | `comunicado`, `actividad`, `declaracion`, `en_los_medios` |
 | autor | String | requerido |
 | estado | enum | `borrador` \| `publicado` (default `borrador`) |
@@ -181,96 +147,25 @@ Todos en `expansion-backend/src/models/`.
 | cedula | String | requerido, único |
 | email | String | requerido, único |
 | telefono | String | requerido |
-| provincia | String | requerido |
-| municipio | String | |
-| sectorInteres | String | |
-| estado | enum | `pendiente` \| `aprobado` \| `rechazado` |
-
-**Comentario.js**
-| Campo | Tipo | Notas |
-|---|---|---|
-| noticia | ObjectId → Noticia | requerido |
-| miembro | ObjectId → Miembro | requerido — solo miembros afiliados y aprobados pueden comentar |
-| texto | String | requerido, máx 1000 |
-| estado | enum | `pendiente` \| `aprobado` \| `rechazado` (pre-moderación) |
-
-**Usuario.js** (cuentas del panel — Admin/Publicador)
-| Campo | Tipo | Notas |
-|---|---|---|
-| nombre, email | String | requeridos, email único |
+| provincia, municipio | String | requerido/opcional — llenados vía selects dependientes en `/afiliate` |
+| sectorInteres | String | texto libre, temático (no geográfico) |
 | passwordHash | String | recibido en texto plano, hasheado con bcrypt en hook `pre('save')` |
-| rol | enum | `admin` \| `publicador` |
-| activo | Boolean | default true — solo **admin** puede desactivar |
-
-**Miembro.js** — actualizado: se agregó `passwordHash` (mismo patrón de hash que Usuario) para permitir login de miembros y así comentar.
-
-**Encuesta.js** — actualizado: se agregó `creadoPor` (ref a Usuario).
-
-## Sistema de roles y permisos
-
-| Acción                             | Publicador                                                  | Admin                                                                             |
-| ---------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| CRUD de noticias                   | ✅                                                          | ✅                                                                                |
-| Crear/cerrar sus propias encuestas | ✅                                                          | ✅ (+ cualquier encuesta, no solo las propias)                                    |
-| Moderar comentarios                | ✅                                                          | ✅                                                                                |
-| Ver dashboard/estadísticas         | —                                                           | ✅                                                                                |
-| Activar cuentas nuevas del panel   | ✅ (cualquiera puede dar de alta, queda activa por defecto) | ✅                                                                                |
-| **Desactivar** cuentas del panel   | ❌                                                          | ✅ (única acción exclusiva de Admin, para no crear cuello de botella en el resto) |
-
-## Autenticación (JWT)
-
-**Login unificado**: un solo endpoint y una sola página (`/login`) para Usuario y Miembro. El backend busca el email primero en `Usuario`, si no existe busca en `Miembro`, y responde con `tipo: 'usuario' | 'miembro'`. El frontend redirige según ese campo: Usuario → `/admin`, Miembro → `/` con sesión activa. Reemplaza el diseño anterior de dos logins separados (`/admin/login`, `/miembro/login`, ya no existen).
-
-- `POST /api/auth/login` → según el email encontrado: `{ token, tipo: 'usuario', usuario: {...} }` o `{ token, tipo: 'miembro', miembro: {...} }`
-- Token expira en 7 días, mismo `JWT_SECRET`.
-
-Middleware en `expansion-backend/src/middleware/auth.js`:
-
-- `verifyToken`: valida el JWT, cuelga el payload en `req.auth`
-- `requireRolUsuario(...roles)`: exige tipo `usuario` y rol específico
-- `requireMiembro`: exige tipo `miembro`
-
-**Frontend**: dos sistemas de sesión en `localStorage`, independientes entre sí — `lib/auth.ts` (Usuario/panel) y `lib/authMiembro.ts` (Miembro/comentar). Sin NextAuth (decisión previa). `app/admin/layout.tsx` protege `/admin/*`, redirige a `/login` si no hay token de Usuario.
-
-## Encuestas públicas (diseño acordado, pendiente de construir)
-
-- Cada encuesta tendrá una página pública (`/encuestas/[id]` o `[slug]`) compartible en redes.
-- Votación **anónima**, sin cuenta — protección básica contra voto múltiple vía `localStorage` (no infalible, es el estándar para este tipo de encuesta abierta).
-- Tras votar, invitación opcional a **"Inscribirse"** (no "afiliarse" — término elegido deliberadamente para sugerir menos compromiso): nombre, email, teléfono opcional.
-- Requiere modelo nuevo `Inscrito`, distinto de `Miembro` (afiliación formal) y `Voluntario`.
-- **Estado: diseño acordado, código aún no escrito** — construir en próxima sesión.
-
-## Endpoints del backend (actualizado, agregados en esta sesión)
-
-| Método | Ruta                                  | Descripción                                        | Auth                       | Estado                   |
-| ------ | ------------------------------------- | -------------------------------------------------- | -------------------------- | ------------------------ |
-| POST   | `/api/auth/login`                     | Login unificado (Usuario o Miembro según email)    | pública                    | ✅ probado (ambos casos) |
-| GET    | `/api/comentarios/noticia/:noticiaId` | Comentarios aprobados de una noticia               | pública                    | ✅ probado               |
-| POST   | `/api/comentarios`                    | Crear comentario                                   | Miembro                    | ✅ probado               |
-| GET    | `/api/comentarios/pendientes`         | Bandeja de moderación                              | Usuario (admin/publicador) | ⚠️ sin probar            |
-| PUT    | `/api/comentarios/:id/moderar`        | Aprobar/rechazar comentario                        | Usuario (admin/publicador) | ⚠️ sin probar            |
-| PUT    | `/api/encuestas/:id/cerrar`           | Cierra encuesta (propia, o cualquiera si es admin) | Usuario (admin/publicador) | ⚠️ sin probar            |
-
-**Noticias**: `POST`/`PUT`/`DELETE` ahora requieren token de Usuario con rol admin o publicador — confirmado con la prueba end-to-end del panel (crear + publicar/despublicar).
+| estado | enum | `pendiente` \| `aprobado` \| `rechazado` |
 
 **Voluntario.js**
 | Campo | Tipo | Notas |
 |---|---|---|
-| nombre, apellido | String | requeridos |
-| email, telefono | String | requeridos |
-| provincia | String | requerido |
-| areaInteres | String | |
-| disponibilidad | String | |
+| nombre, apellido, email, telefono, provincia | String | requeridos |
+| areaInteres, disponibilidad | String | opcionales |
 | mensaje | String | máx 500 |
 | estado | enum | `pendiente` \| `contactado` \| `activo` |
 
 **Evento.js**
 | Campo | Tipo | Notas |
 |---|---|---|
-| titulo, descripcion | String | requeridos |
+| titulo, descripcion, lugar | String | requeridos |
 | fecha | Date | requerido |
-| lugar | String | requerido |
-| imagen | String | |
+| imagen | String | opcional |
 | requiereInscripcion | Boolean | default false |
 | cupoMaximo | Number | opcional |
 | estado | enum | `proximo` \| `realizado` \| `cancelado` |
@@ -279,38 +174,176 @@ Middleware en `expansion-backend/src/middleware/auth.js`:
 | Campo | Tipo | Notas |
 |---|---|---|
 | pregunta | String | requerido |
-| opciones | [{ texto, votos }] | mínimo 2 opciones, subdocumento con `_id` |
+| opciones | [{ texto, votos }] | mínimo 2, subdocumento con `_id` |
 | activa | Boolean | default true |
 | fechaCierre | Date | opcional |
+| creadoPor | ObjectId → Usuario | quién la creó (para reglas de "propia encuesta") |
 
-Todos incluyen `timestamps: true` (createdAt/updatedAt automáticos).
+**Usuario.js** (cuentas del panel — Admin/Publicador)
+| Campo | Tipo | Notas |
+|---|---|---|
+| nombre, email | String | requeridos, email único |
+| passwordHash | String | hasheado con bcrypt en hook `pre('save')` |
+| rol | enum | `admin` \| `publicador` |
+| activo | Boolean | default true — solo Admin puede desactivar (endpoint aún no construido) |
+
+**Comentario.js**
+| Campo | Tipo | Notas |
+|---|---|---|
+| noticia | ObjectId → Noticia | requerido |
+| miembro | ObjectId → Miembro | requerido — solo Miembros afiliados y aprobados comentan |
+| texto | String | requerido, máx 1000 |
+| estado | enum | `pendiente` \| `aprobado` \| `rechazado` (pre-moderación) |
+
+**Modelo descartado**: `Inscrito` — se planeó en sesión 8 para votación anónima pública, revertido en sesión 11 (ver Decisiones en `CONTEXTO_PROYECTO.md`). No construir.
+
+## Sistema de roles y permisos
+
+| Acción                                  | Publicador                                 | Admin                                                            |
+| --------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------- |
+| CRUD de noticias                        | ✅                                         | ✅                                                               |
+| Crear/cerrar sus propias encuestas      | ✅                                         | ✅ (+ cualquier encuesta)                                        |
+| Votar en encuestas                      | — (usa su cuenta como Miembro si aplica)   | —                                                                |
+| Moderar comentarios                     | ✅                                         | ✅                                                               |
+| Aprobar/rechazar afiliaciones (Miembro) | ❌ (solo Admin, dato sensible de personas) | ✅                                                               |
+| Ver dashboard/estadísticas              | —                                          | ✅ (sin construir)                                               |
+| Activar cuentas nuevas del panel        | ✅ (activa por defecto al crear)           | ✅                                                               |
+| **Desactivar** cuentas del panel        | ❌                                         | ✅ (única acción exclusiva, evita cuello de botella en el resto) |
+
+**Nota**: solo Miembros afiliados y aprobados pueden votar en encuestas (decisión sesión 11) — ver sección de Encuestas abajo.
+
+## Autenticación (JWT)
+
+**Login unificado**: un solo endpoint (`POST /api/auth/login`) y una sola página (`/login`). El backend busca el email primero en `Usuario`, si no existe busca en `Miembro`, responde con `tipo: 'usuario' | 'miembro'`. El frontend redirige: Usuario → `/admin`, Miembro → `/` con sesión activa.
+
+Middleware `expansion-backend/src/middleware/auth.js`:
+
+- `verifyToken`: valida JWT, cuelga payload en `req.auth`
+- `requireRolUsuario(...roles)`: exige tipo `usuario` y rol específico
+- `requireMiembro`: exige tipo `miembro`
+
+Token expira en 7 días (`JWT_SECRET` en `.env`).
+
+**Frontend**: dos sistemas de sesión en `localStorage`, independientes — `lib/auth.ts` (Usuario) y `lib/authMiembro.ts` (Miembro). Ambos disparan un evento custom al guardar/cerrar sesión (`alCambiarSesionUsuario`, `alCambiarSesionMiembro`) para que componentes como `Navbar`/`UserMenu` reaccionen en vivo sin recargar la página. `app/admin/layout.tsx` protege `/admin/*`, redirige a `/login` si no hay token de Usuario.
+
+## Frontend — páginas públicas
+
+| Página              | Ruta                               | Descripción                                                                     | Estado         |
+| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------- | -------------- |
+| Inicio              | `app/page.tsx`                     | Hero con anillos SVG, presencia de Mario Díaz, sección de pilares (placeholder) | ✅ funcionando |
+| Sobre el movimiento | `app/sobre-el-movimiento/page.tsx` | Historia, misión, visión, valores — placeholder                                 | ✅ funcionando |
+| Liderazgo           | `app/liderazgo/page.tsx`           | Bio de Mario Díaz + estructura — placeholder                                    | ✅ funcionando |
+| Noticias (listado)  | `app/noticias/page.tsx`            | Server component, fetch `/api/noticias?estado=publicado`                        | ✅ funcionando |
+| Noticias (detalle)  | `app/noticias/[slug]/page.tsx`     | Fetch por slug, imagen/galería/video si existen, sección de Comentarios         | ✅ funcionando |
+| Login unificado     | `app/login/page.tsx`               | Un form, redirige según tipo de cuenta                                          | ✅ probado     |
+| Afiliación          | `app/afiliate/page.tsx`            | Form de Miembro, selects provincia/municipio, confirmación de contraseña        | ✅ probado     |
+
+**Componentes compartidos**: `Navbar.tsx` (con `UserMenu`), `Footer.tsx`, `SiteChrome.tsx` (excluye Navbar/Footer dentro de `/admin/*`), `Comentarios.tsx` (en detalle de noticia — lista aprobados, form solo si hay sesión de Miembro).
+
+**Pendiente conocido**: botón "Afíliate" ya no aparece si hay sesión activa (correcto); si no hay sesión, sigue llevando a `/afiliate` que ya existe y funciona.
+
+## Panel admin (`/admin/*`, solo Usuario)
+
+| Ruta                                | Descripción                                                     | Estado     |
+| ----------------------------------- | --------------------------------------------------------------- | ---------- |
+| `app/admin/layout.tsx`              | Protección de rutas + header propio (sin Navbar/Footer público) | ✅ probado |
+| `app/admin/page.tsx`                | Dashboard simple, accesos a Noticias/Comentarios/Miembros       | ✅ probado |
+| `app/admin/noticias/page.tsx`       | Listado con Publicar/Despublicar                                | ✅ probado |
+| `app/admin/noticias/nueva/page.tsx` | Crear noticia (queda en `borrador`)                             | ✅ probado |
+| `app/admin/comentarios/page.tsx`    | Bandeja de moderación — aprobar/rechazar                        | ✅ probado |
+| `app/admin/miembros/page.tsx`       | Solicitudes de afiliación, filtro por estado, aprobar/rechazar  | ✅ probado |
+
+**Aún no construido en el panel**: gestión de Voluntario/Evento/Encuesta, dashboard de estadísticas real, edición de noticias existentes (solo crear + cambiar estado), activar/desactivar cuentas de Usuario, cambio de contraseña por Admin.
+
+## Menú de cuenta (UserMenu)
+
+`components/UserMenu.tsx`: detecta sesión de Usuario o Miembro y muestra menú contextual.
+
+- **`desktop`**: círculo con iniciales + dropdown flotante, se cierra al hacer clic fuera.
+- **`mobile`**: sin dropdown flotante — opciones en línea dentro del menú hamburguesa ya expandido (un `absolute` anidado rompía el layout).
+
+Muestra: nombre + tipo de cuenta, link contextual (`/admin` si Usuario, `/cuenta` si Miembro — **`/cuenta` no existe aún, da 404**), y "Cerrar sesión".
+
+## Encuestas (diseño actualizado, código pendiente)
+
+Decisión revertida en sesión 11 respecto al diseño original de sesión 8:
+
+- ~~Votación anónima pública + modelo `Inscrito`~~ → **descartado**
+- **Ahora**: solo Miembros afiliados y aprobados pueden votar, usando su cuenta existente. Prioriza seguridad (un voto por persona real verificada) sobre alcance viral.
+- Cada encuesta seguirá teniendo una página pública para ver resultados/compartir, pero votar requiere sesión de Miembro.
+- **Estado: diseño acordado, código aún no escrito.**
+
+## Datos geográficos (provincias/municipios)
+
+`expansion-frontend/lib/provinciasMunicipios.ts`: 32 provincias (31 + Distrito Nacional), 158 municipios, `Record<string, string[]>`. Fuente: dataset público `DannyFeliz/Datos-Rep-Dom` (GitHub), descargado y combinado vía script — no escrito a mano, para evitar errores de nombres.
+
+**Inconsistencias conocidas del dataset fuente** (sin corregir, a decidir si importan): "Baoruco" en vez de "Bahoruco"; "Sanchez Ramírez" sin tilde.
+
+Usado en `/afiliate`: selects dependientes provincia→municipio, el municipio se resetea al cambiar provincia.
 
 ## Endpoints del backend
 
-| Método              | Ruta                                       | Descripción                                                    | Estado                                                |
-| ------------------- | ------------------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------- |
-| GET                 | `/api/health`                              | Verifica que el servidor y la conexión a MongoDB estén activos | ✅ funcionando                                        |
-| GET                 | `/api/noticias`                            | Lista noticias (filtros opcionales `?estado=` `?categoria=`)   | ✅ probado                                            |
-| GET                 | `/api/noticias/:slug`                      | Obtiene una noticia por slug                                   | ✅ (patrón replicado, no probado individualmente)     |
-| POST                | `/api/noticias`                            | Crea noticia (slug autogenerado)                               | ✅ probado                                            |
-| PUT                 | `/api/noticias/:id`                        | Actualiza noticia                                              | ✅ probado (usado para publicar la noticia de prueba) |
-| DELETE              | `/api/noticias/:id`                        | Elimina noticia                                                | ✅ (patrón replicado, no probado individualmente)     |
-| GET/POST/PUT/DELETE | `/api/miembros`, `/api/miembros/:id`       | CRUD de afiliación                                             | ⚠️ mismo patrón que Noticia, aún sin probar           |
-| GET/POST/PUT/DELETE | `/api/voluntarios`, `/api/voluntarios/:id` | CRUD de voluntariado                                           | ⚠️ mismo patrón, aún sin probar                       |
-| GET/POST/PUT/DELETE | `/api/eventos`, `/api/eventos/:id`         | CRUD de eventos                                                | ⚠️ mismo patrón, aún sin probar                       |
-| GET/POST/DELETE     | `/api/encuestas`, `/api/encuestas/:id`     | CRUD de encuestas                                              | ⚠️ mismo patrón, aún sin probar                       |
-| POST                | `/api/encuestas/:id/votar/:opcionId`       | Incrementa el voto de una opción                               | ⚠️ aún sin probar                                     |
+| Método              | Ruta                                       | Descripción                              | Auth                                                                                                         | Estado                                  |
+| ------------------- | ------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| GET                 | `/api/health`                              | Server + conexión DB activos             | pública                                                                                                      | ✅ probado                              |
+| GET                 | `/api/noticias`                            | Lista (filtros `?estado=` `?categoria=`) | pública                                                                                                      | ✅ probado                              |
+| GET                 | `/api/noticias/:slug`                      | Una noticia por slug                     | pública                                                                                                      | ✅ probado                              |
+| POST                | `/api/noticias`                            | Crear                                    | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
+| PUT                 | `/api/noticias/:id`                        | Actualizar                               | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
+| DELETE              | `/api/noticias/:id`                        | Eliminar                                 | Usuario (admin/publicador)                                                                                   | ⚠️ patrón replicado, sin probar directo |
+| POST                | `/api/miembros`                            | Afiliarse                                | pública                                                                                                      | ✅ probado                              |
+| GET                 | `/api/miembros`                            | Listar (datos sensibles)                 | **Admin únicamente**                                                                                         | ✅ probado                              |
+| GET                 | `/api/miembros/:id`                        | Uno                                      | Admin                                                                                                        | ⚠️ sin probar directo                   |
+| PUT                 | `/api/miembros/:id`                        | Aprobar/rechazar/editar                  | Admin                                                                                                        | ✅ probado                              |
+| DELETE              | `/api/miembros/:id`                        | Eliminar                                 | Admin                                                                                                        | ⚠️ sin probar                           |
+| GET/POST/PUT/DELETE | `/api/voluntarios`, `/api/voluntarios/:id` | CRUD voluntariado                        | — (sin proteger todavía)                                                                                     | ⚠️ sin probar                           |
+| GET/POST/PUT/DELETE | `/api/eventos`, `/api/eventos/:id`         | CRUD eventos                             | — (sin proteger todavía)                                                                                     | ⚠️ sin probar                           |
+| GET/POST/DELETE     | `/api/encuestas`, `/api/encuestas/:id`     | CRUD encuestas                           | POST: Usuario                                                                                                | ⚠️ sin probar                           |
+| POST                | `/api/encuestas/:id/votar/:opcionId`       | Votar                                    | pública en el código actual — **desactualizado**, debe pasar a requerir Miembro por la decisión de sesión 11 | ⚠️ pendiente actualizar código          |
+| PUT                 | `/api/encuestas/:id/cerrar`                | Cerrar (propia o cualquiera si admin)    | Usuario                                                                                                      | ⚠️ sin probar                           |
+| POST                | `/api/auth/login`                          | Login unificado                          | pública                                                                                                      | ✅ probado                              |
+| GET                 | `/api/comentarios/noticia/:noticiaId`      | Comentarios aprobados                    | pública                                                                                                      | ✅ probado                              |
+| POST                | `/api/comentarios`                         | Crear comentario                         | Miembro                                                                                                      | ✅ probado                              |
+| GET                 | `/api/comentarios/pendientes`              | Bandeja de moderación                    | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
+| PUT                 | `/api/comentarios/:id/moderar`             | Aprobar/rechazar                         | Usuario (admin/publicador)                                                                                   | ✅ probado                              |
 
-## Notas técnicas / bugs conocidos y resueltos
+**Nota importante**: `POST /api/encuestas/:id/votar/:opcionId` en el código actual sigue siendo público (como se diseñó en sesión 8), pero la decisión de sesión 11 dice que debe requerir sesión de Miembro. Este endpoint necesita actualizarse para reflejar la decisión — anotado como pendiente real, no solo diseño.
 
-- **Mongoose 9.x — hooks síncronos no usan `next()`**: el hook `pre('validate')` de `Noticia.js` originalmente incluía un parámetro `next` que causaba `"next is not a function"` al no ser invocado correctamente por esta versión de Mongoose. Se corrigió quitando el parámetro `next` del callback (hook síncrono, sin callback). Si se agregan más hooks `pre`/`post` en otros modelos, verificar si necesitan ser async o síncronos según corresponda, en vez de asumir el estilo clásico de Mongoose 6/7.
-- **Zona horaria en fechas (conocido, no resuelto)**: `toLocaleDateString` en las páginas de noticias interpreta fechas guardadas como medianoche UTC y las corre un día hacia atrás al mostrarlas en horario de RD (UTC-4). Ej: `fechaPublicacion: "2026-08-10T00:00:00.000Z"` se muestra como "9 de agosto". Pendiente de resolver cuando se construya el selector de fecha en el panel admin (probablemente forzando la hora a mediodía UTC, o formateando explícitamente en UTC en el frontend).
-- **`setState` síncrono dentro de `useEffect` (resuelto)**: en `app/admin/noticias/page.tsx`, llamar directo a una función `async` que hacía `setCargando(true)` como primera línea disparaba el lint `react-hooks/set-state-in-effect`. Se corrigió separando el fetch (`fetchNoticias()`, sin tocar estado) del `useEffect`, que ahora actualiza estado dentro del `.then()` con bandera `ignore` para evitar updates tras desmontaje. Aplicar el mismo patrón en cualquier página nueva del panel que haga fetch en `useEffect`.
-- **Falta botón de login visible (resuelto)**: se agregó `UserMenu` en el Navbar, visible en todo el sitio público.
-- **`GET /api/miembros` sin proteger (resuelto, era un vacío de seguridad real)**: quedó público al armar roles en sesión 8 — cualquiera podía ver cédulas/teléfonos/emails de solicitantes. Se restringió a **solo Admin** (no Publicador, es dato sensible de personas). `POST /api/miembros` (afiliarse) se mantiene público, es la única ruta abierta de ese controlador.
-- **Navbar no reaccionaba a login/logout sin recargar (resuelto)**: `Navbar` lee sesión solo al montar, y como vive en el layout raíz no se remonta en navegación SPA. Se agregó un sistema de eventos custom (`alCambiarSesionUsuario`, `alCambiarSesionMiembro`) que las funciones de guardar/cerrar sesión disparan, y el Navbar escucha para actualizar su estado en vivo. Aplicar el mismo patrón a cualquier componente futuro que necesite reaccionar a cambios de sesión.
-- **Dropdown de cuenta roto en móvil (resuelto)**: un `position: absolute` anidado dentro del menú hamburguesa ya expandido rompía el layout. Se resolvió dando a `UserMenu` una variante `mobile` sin dropdown flotante — las opciones se muestran en línea dentro del menú ya abierto, en vez de un segundo nivel de despliegue.
+## Variables de entorno
 
-## Decisiones técnicas registradas
+**expansion-backend/.env** (valores reales no documentados aquí por seguridad, solo la forma):
 
-- (vacío por ahora — cada decisión importante de arquitectura se anota aquí con fecha y motivo breve)
+```
+PORT=4000
+MONGODB_URI=mongodb+srv://<usuario>:<password>@cluster0.xxxxx.mongodb.net/la-expansion?retryWrites=true&w=majority
+CORS_ORIGIN=http://localhost:3000
+JWT_SECRET=<valor largo y aleatorio, no compartido en el chat>
+```
+
+**expansion-frontend/.env.local**
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
+
+## Infraestructura desplegada
+
+- **MongoDB Atlas**: cluster `Cluster0`, tier Free (M0), AWS, `us-east-1`. Network Access `0.0.0.0/0` (necesario para Render free, sin IP fija).
+- **Backend**: solo local (`localhost:4000`), sin desplegar a Render todavía.
+- **Frontend**: solo local (`localhost:3000`), sin desplegar a Vercel todavía.
+
+## Notas técnicas / bugs conocidos
+
+**Resueltos:**
+
+- **Mongoose 9.x, hooks síncronos sin `next()`**: el hook `pre('validate')` de `Noticia.js` (autogenerar slug) causaba `"next is not a function"` con el parámetro `next` que Mongoose 9.x ya no invoca así. Se quitó el parámetro.
+- **`setState` síncrono dentro de `useEffect`**: patrón repetido en varios archivos (`admin/noticias/page.tsx`, `admin/layout.tsx`, `Navbar.tsx`). Fix: separar el fetch/lectura de estado externo de la actualización de estado — la actualización debe ir dentro de un `.then()` o `Promise.resolve().then()`, nunca como primera línea síncrona del cuerpo del efecto. Aplicar este patrón en cualquier código nuevo.
+- **`GET /api/miembros` sin proteger**: quedó público al armar roles (sesión 8), exponía cédulas/teléfonos/emails. Corregido: solo Admin.
+- **Navbar no reaccionaba a login/logout sin recargar**: vive en el layout raíz, no se remonta en navegación SPA. Fix: sistema de eventos custom que `guardarSesion`/`cerrarSesion` (ambos tipos) disparan.
+- **Dropdown de cuenta roto en móvil**: `position: absolute` anidado dentro del menú hamburguesa. Fix: variante `mobile` de `UserMenu` sin dropdown flotante.
+
+**Pendientes (no resueltos):**
+
+- **Zona horaria en fechas**: `toLocaleDateString` corre un día hacia atrás fechas guardadas a medianoche UTC en horario de RD (UTC-4). Resolver cuando se construya selector de fecha real en el panel.
+- **`POST /api/encuestas/:id/votar/:opcionId` sigue público**: debe actualizarse para requerir Miembro (ver Endpoints arriba).
+- **`/api/voluntarios` y `/api/eventos` sin protección de rol todavía** — a diferencia de noticias/miembros/comentarios, estos dos CRUD quedaron sin `verifyToken`/`requireRolUsuario` desde que se crearon en sesión 3-4. Revisar si deben protegerse igual antes de construir su UI en el panel.

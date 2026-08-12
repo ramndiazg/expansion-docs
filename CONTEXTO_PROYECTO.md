@@ -1,6 +1,6 @@
 # CONTEXTO_PROYECTO.md
 
-Ruta destino en el repo: `la-expansion/CONTEXTO_PROYECTO.md`
+Ruta destino en el repo: `la-expansion-docs/CONTEXTO_PROYECTO.md`
 
 > Este documento se lee al inicio de cada sesión de trabajo con Claude para recuperar el contexto completo del proyecto, ya que Claude no mantiene memoria entre sesiones.
 
@@ -110,9 +110,31 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 - Render: plan gratuito para el backend.
 - Cualquier servicio adicional (email, analytics, captcha, etc.) debe evaluarse primero en su tier gratuito antes de considerar planes pagos.
 
-## Fase actual
+## Fase actual (actualizado 2026-08-11, sesión 11)
 
-**Fase 0 — Esqueleto técnico**: crear estructura de repos, conexión backend↔MongoDB, deploy mínimo funcionando end-to-end, página de Inicio simple. Objetivo: descubrir problemas de infraestructura temprano antes de construir features de contenido.
+**Fase 0 — Esqueleto técnico: completada** (sesión 5).
+
+**Fase 1 — Construcción de features: en curso.** Completado hasta ahora:
+
+- Páginas institucionales (Inicio, Sobre el movimiento, Liderazgo) con contenido placeholder
+- Sistema de noticias completo: CRUD backend, listado/detalle público, panel de creación y publicación
+- Sistema de auth JWT unificado (Usuario y Miembro por el mismo login)
+- Roles Admin/Publicador con permisos diferenciados
+- Afiliación de miembros (con selects geográficos reales) + aprobación desde el panel
+- Comentarios en noticias (solo Miembros aprobados) + moderación desde el panel
+- Menú de cuenta (UserMenu) dinámico en el sitio público
+
+**Pendiente para continuar la Fase 1** (ver detalle completo en `ARQUITECTURA.md` → "Aún no construido"):
+
+- Área de Miembro (`/cuenta`)
+- Activar/desactivar cuentas de Usuario + cambio de contraseña por Admin
+- Encuestas (código, con la restricción de solo-Miembro-vota)
+- Gestión de Voluntario/Evento en el panel (y decidir si proteger esas rutas del backend)
+- Edición de noticias existentes
+- Contenido real reemplazando los placeholders
+- Confirmar newsletter/donaciones/Contacto (ver más abajo, sigue sin decidir)
+
+**Fase 2 (no iniciada)**: deploy a producción (Vercel + Render), dominio, contenido final.
 
 ## Decisiones pendientes de confirmar con Ramon
 
