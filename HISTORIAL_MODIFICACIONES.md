@@ -235,3 +235,62 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 - Sigue pendiente probar Miembro/Voluntario/Evento/Encuesta (CRUD original) individualmente.
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
 - Decidir: seguir con las piezas pendientes del panel, o pasar a deploy de lo que ya existe.
+
+---
+
+### 2026-08-10 — Sesión 9: Fix de bug (setState en useEffect)
+
+**Qué se hizo:**
+
+- Ramon detectó que no hay ningún botón/enlace visible en el sitio hacia `/admin/login` (ni hacia un futuro login de Miembro) — **anotado como pendiente para próximo bloque**, no se resolvió en esta sesión.
+- Se corrigió bug real: `app/admin/noticias/page.tsx` llamaba una función async con `setState` síncrono dentro de `useEffect`, disparando el lint `react-hooks/set-state-in-effect`. Se separó el fetch de la actualización de estado (ver detalle en `ARQUITECTURA.md`).
+
+**Qué se probó:**
+
+- El error de lint/consola desapareció. ✅
+- El listado de noticias en `/admin/noticias` sigue cargando y funcionando igual que antes. ✅
+
+**Qué falta / pendiente para próxima sesión:**
+
+- Hacer commit de este fix en `expansion-frontend`.
+- **Agregar acceso visible a login** — de Usuario (panel) y de Miembro (comentar) — en el sitio público.
+- Construir: endpoint y UI para activar/desactivar cuentas de Usuario.
+- Construir: registro/login de Miembro desde el frontend público, y flujo de comentarios.
+- Construir: modelo `Inscrito` y encuestas públicas compartibles.
+- Construir en el panel: gestión de Miembro, Voluntario, Evento.
+- Agregar edición de noticias existentes (título/contenido).
+- Sigue pendiente probar Miembro/Voluntario/Evento/Encuesta (CRUD original) individualmente.
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
+
+---
+
+### 2026-08-10/11 — Sesión 10: Login unificado, comentarios, datos geográficos reales
+
+**Qué se hizo:**
+
+- Se unificó el login: un solo endpoint `POST /api/auth/login` y una sola página `/login`; el backend detecta si el email es de Usuario o Miembro y responde con `tipo`, el frontend redirige a `/admin` o a `/` según corresponda. Se borraron `/admin/login` y `/miembro/login`.
+- Se creó `app/afiliate/page.tsx` (no se había creado en el bloque original — desfase detectado y corregido), `lib/authMiembro.ts`, `components/Comentarios.tsx` (mismo caso, faltaban).
+- Se corrigió el mismo bug de `setState` síncrono en `useEffect` en `app/admin/layout.tsx` (patrón: envolver en `Promise.resolve().then()` cuando no hay `fetch` de por medio) y en `components/Navbar.tsx`.
+- Se integró `Comentarios` en `app/noticias/[slug]/page.tsx`.
+- **Datos geográficos**: se descargó (no se escribió a mano) un dataset público de provincias/municipios de RD, se combinó en `lib/provinciasMunicipios.ts` (32 provincias, 158 municipios). Se implementaron selects dependientes provincia→municipio en `/afiliate`. Se decidió dejar `sectorInteres` como texto libre (no geográfico) y no implementar un tercer nivel de sector geográfico por ahora, para no cargar un dataset mucho más grande en un sitio mobile-first.
+- Se agregó campo de confirmación de contraseña en `/afiliate`, con validación antes de enviar.
+
+**Qué se probó:**
+
+- Login con email de Usuario (admin) → redirige a `/admin`. ✅
+- Login con email de Miembro aprobado → redirige a `/` con sesión activa. ✅
+- Registro completo en `/afiliate`, incluyendo selects de provincia/municipio funcionando (municipio se resetea al cambiar provincia, deshabilitado hasta elegir provincia). ✅
+- Comentar en una noticia estando logueado como Miembro — guarda como `pendiente`. ✅
+- Confirmación de contraseña — rechaza si no coinciden, envía si coinciden. ✅
+
+**Qué falta / pendiente para próxima sesión:**
+
+- Hacer commit de este bloque (backend: login unificado; frontend: todo lo anterior).
+- Construir: UI de moderación de comentarios (el dato ya se guarda, falta la bandeja para aprobar/rechazar).
+- Construir: endpoint y UI para activar/desactivar cuentas de Usuario.
+- Construir: modelo `Inscrito` y encuestas públicas compartibles (diseño ya acordado en sesión 8).
+- Construir en el panel: gestión de Miembro (aprobar/rechazar — ahora mismo se hace solo por curl), Voluntario, Evento.
+- Agregar edición de noticias existentes.
+- Decidir si corregir las inconsistencias de nombres en el dataset geográfico ("Baoruco"/"Bahoruco", "Sanchez"/"Sánchez Ramírez").
+- Sigue pendiente probar Voluntario/Evento/Encuesta (CRUD original) individualmente.
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).

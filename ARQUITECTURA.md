@@ -86,10 +86,49 @@ Sin dark mode automático.
 | `app/admin/page.tsx`                | Dashboard simple, saludo + accesos                                            | ✅ probado |
 | `app/admin/noticias/page.tsx`       | Listado de noticias con botón Publicar/Despublicar (`PUT` estado)             | ✅ probado |
 | `app/admin/noticias/nueva/page.tsx` | Formulario de creación (crea como `borrador` por diseño)                      | ✅ probado |
+| `app/admin/comentarios/page.tsx`    | Bandeja de moderación: aprobar/rechazar comentarios pendientes                | ✅ probado |
+| `app/admin/miembros/page.tsx`       | Listado de solicitudes de afiliación con filtro por estado, aprobar/rechazar  | ✅ probado |
 
 `lib/auth.ts`: helpers de sesión (`guardarSesion`, `obtenerToken`, `obtenerUsuario`, `cerrarSesion`) usando `localStorage` — no se usa NextAuth (decisión de arquitectura previa).
 
-**Aún no construido en el panel**: gestión de Miembro/Voluntario/Evento/Encuesta, bandeja de moderación de comentarios, dashboard de estadísticas real, edición de noticias existentes (solo hay crear + publicar/despublicar, no editar título/contenido).
+**Aún no construido en el panel**: gestión de Voluntario/Evento/Encuesta, dashboard de estadísticas real, edición de noticias existentes (solo hay crear + publicar/despublicar, no editar título/contenido), activar/desactivar cuentas de Usuario, cambio de contraseña por Admin.
+
+## Menú de cuenta (UserMenu)
+
+`components/UserMenu.tsx`: detecta si hay sesión de Usuario o de Miembro (ambas comparten Navbar, son sistemas independientes) y muestra un menú de cuenta unificado. Dos variantes:
+
+- **`desktop`**: círculo con iniciales + dropdown flotante (`position: absolute`), se cierra al hacer clic fuera.
+- **`mobile`**: sin dropdown flotante — dentro del menú hamburguesa ya expandido, las opciones se muestran en línea directamente (evita el bug de superposición/layout roto que da un `absolute` anidado dentro de otro menú ya abierto).
+
+Cada variante muestra: nombre + tipo de cuenta, un link contextual (`/admin` si es Usuario, `/cuenta` si es Miembro — **`/cuenta` aún no existe**, da 404 hasta construir el área de miembro), y "Cerrar sesión".
+
+`lib/auth.ts` se actualizó para seguir el mismo patrón de eventos que `lib/authMiembro.ts` (`alCambiarSesionUsuario`, dispara evento en `guardarSesion`/`cerrarSesion`) — necesario para que el Navbar reaccione a cambios de sesión de Usuario en tiempo real, igual que ya hacía con Miembro.
+
+`components/SiteChrome.tsx`: envuelve `Navbar`/`Footer` condicionalmente — no se muestran dentro de `/admin/*`, ya que el panel tiene su propio header. Se agregó tras detectar que ambos headers aparecían superpuestos.
+
+El botón "Afíliate" en el Navbar ahora es condicional: no se muestra si hay cualquier sesión activa (Usuario o Miembro).
+
+## Datos geográficos (provincias/municipios)
+
+`expansion-frontend/lib/provinciasMunicipios.ts`: 32 provincias (31 + Distrito Nacional), 158 municipios, agrupados como `Record<string, string[]>`. Fuente: dataset público `DannyFeliz/Datos-Rep-Dom` (GitHub, actualizado 2023) — se descargó y combinó vía script, no se escribió a mano, para evitar errores de nombres.
+
+**Inconsistencias conocidas del dataset fuente** (no corregidas, a decidir si importan):
+
+- "Baoruco" en vez de "Bahoruco"
+- "Sanchez Ramírez" sin tilde en la primera "a"
+
+Usado en `app/afiliate/page.tsx`: selects dependientes (provincia → municipio), el municipio se resetea al cambiar de provincia y el select queda deshabilitado hasta elegir provincia.
+
+## Páginas públicas nuevas (frontend)
+
+| Página          | Ruta                    | Descripción                                                                       | Estado     |
+| --------------- | ----------------------- | --------------------------------------------------------------------------------- | ---------- |
+| Login unificado | `app/login/page.tsx`    | Un solo form, redirige según tipo de cuenta devuelto por el backend               | ✅ probado |
+| Afiliación      | `app/afiliate/page.tsx` | Formulario de Miembro, selects de provincia/municipio, confirmación de contraseña | ✅ probado |
+
+`components/Comentarios.tsx`: sección de comentarios en el detalle de noticia — lista aprobados (público), formulario solo visible si hay sesión de Miembro, mensaje de "inicia sesión" si no. Comentario nuevo entra como `pendiente` (no aparece hasta ser moderado — moderación aún sin UI).
+
+`lib/authMiembro.ts`: helpers de sesión de Miembro en `localStorage`, paralelo a `lib/auth.ts` mismo patrón.
 
 **Todo el contenido de texto (historia, misión, visión, valores, bio de Mario Díaz, estructura organizativa, eslogan del hero, pilares) es placeholder** y debe reemplazarse con copy real antes de producción — buscar comentarios `{/* PLACEHOLDER: ... */}` en el código para ubicarlos todos.
 
@@ -180,10 +219,10 @@ Todos en `expansion-backend/src/models/`.
 
 ## Autenticación (JWT)
 
-Dos tipos de sesión distintos, mismo mecanismo de token (`JWT_SECRET`, expira en 7 días):
+**Login unificado**: un solo endpoint y una sola página (`/login`) para Usuario y Miembro. El backend busca el email primero en `Usuario`, si no existe busca en `Miembro`, y responde con `tipo: 'usuario' | 'miembro'`. El frontend redirige según ese campo: Usuario → `/admin`, Miembro → `/` con sesión activa. Reemplaza el diseño anterior de dos logins separados (`/admin/login`, `/miembro/login`, ya no existen).
 
-- **Usuario** (panel): `POST /api/auth/login` → `{ id, tipo: 'usuario', rol }`
-- **Miembro** (comentar): `POST /api/auth/miembro-login` → `{ id, tipo: 'miembro' }` — requiere `estado: 'aprobado'`
+- `POST /api/auth/login` → según el email encontrado: `{ token, tipo: 'usuario', usuario: {...} }` o `{ token, tipo: 'miembro', miembro: {...} }`
+- Token expira en 7 días, mismo `JWT_SECRET`.
 
 Middleware en `expansion-backend/src/middleware/auth.js`:
 
@@ -191,7 +230,7 @@ Middleware en `expansion-backend/src/middleware/auth.js`:
 - `requireRolUsuario(...roles)`: exige tipo `usuario` y rol específico
 - `requireMiembro`: exige tipo `miembro`
 
-**Frontend**: token + datos de usuario guardados en `localStorage` (`lib/auth.ts`), sin usar NextAuth (decisión previa). `app/admin/layout.tsx` protege todas las rutas `/admin/*` excepto `/admin/login`, redirigiendo si no hay token.
+**Frontend**: dos sistemas de sesión en `localStorage`, independientes entre sí — `lib/auth.ts` (Usuario/panel) y `lib/authMiembro.ts` (Miembro/comentar). Sin NextAuth (decisión previa). `app/admin/layout.tsx` protege `/admin/*`, redirige a `/login` si no hay token de Usuario.
 
 ## Encuestas públicas (diseño acordado, pendiente de construir)
 
@@ -203,15 +242,14 @@ Middleware en `expansion-backend/src/middleware/auth.js`:
 
 ## Endpoints del backend (actualizado, agregados en esta sesión)
 
-| Método | Ruta                                  | Descripción                                        | Auth                       | Estado        |
-| ------ | ------------------------------------- | -------------------------------------------------- | -------------------------- | ------------- |
-| POST   | `/api/auth/login`                     | Login de Usuario (panel)                           | pública                    | ✅ probado    |
-| POST   | `/api/auth/miembro-login`             | Login de Miembro (comentar)                        | pública                    | ⚠️ sin probar |
-| GET    | `/api/comentarios/noticia/:noticiaId` | Comentarios aprobados de una noticia               | pública                    | ⚠️ sin probar |
-| POST   | `/api/comentarios`                    | Crear comentario                                   | Miembro                    | ⚠️ sin probar |
-| GET    | `/api/comentarios/pendientes`         | Bandeja de moderación                              | Usuario (admin/publicador) | ⚠️ sin probar |
-| PUT    | `/api/comentarios/:id/moderar`        | Aprobar/rechazar comentario                        | Usuario (admin/publicador) | ⚠️ sin probar |
-| PUT    | `/api/encuestas/:id/cerrar`           | Cierra encuesta (propia, o cualquiera si es admin) | Usuario (admin/publicador) | ⚠️ sin probar |
+| Método | Ruta                                  | Descripción                                        | Auth                       | Estado                   |
+| ------ | ------------------------------------- | -------------------------------------------------- | -------------------------- | ------------------------ |
+| POST   | `/api/auth/login`                     | Login unificado (Usuario o Miembro según email)    | pública                    | ✅ probado (ambos casos) |
+| GET    | `/api/comentarios/noticia/:noticiaId` | Comentarios aprobados de una noticia               | pública                    | ✅ probado               |
+| POST   | `/api/comentarios`                    | Crear comentario                                   | Miembro                    | ✅ probado               |
+| GET    | `/api/comentarios/pendientes`         | Bandeja de moderación                              | Usuario (admin/publicador) | ⚠️ sin probar            |
+| PUT    | `/api/comentarios/:id/moderar`        | Aprobar/rechazar comentario                        | Usuario (admin/publicador) | ⚠️ sin probar            |
+| PUT    | `/api/encuestas/:id/cerrar`           | Cierra encuesta (propia, o cualquiera si es admin) | Usuario (admin/publicador) | ⚠️ sin probar            |
 
 **Noticias**: `POST`/`PUT`/`DELETE` ahora requieren token de Usuario con rol admin o publicador — confirmado con la prueba end-to-end del panel (crear + publicar/despublicar).
 
@@ -267,6 +305,11 @@ Todos incluyen `timestamps: true` (createdAt/updatedAt automáticos).
 
 - **Mongoose 9.x — hooks síncronos no usan `next()`**: el hook `pre('validate')` de `Noticia.js` originalmente incluía un parámetro `next` que causaba `"next is not a function"` al no ser invocado correctamente por esta versión de Mongoose. Se corrigió quitando el parámetro `next` del callback (hook síncrono, sin callback). Si se agregan más hooks `pre`/`post` en otros modelos, verificar si necesitan ser async o síncronos según corresponda, en vez de asumir el estilo clásico de Mongoose 6/7.
 - **Zona horaria en fechas (conocido, no resuelto)**: `toLocaleDateString` en las páginas de noticias interpreta fechas guardadas como medianoche UTC y las corre un día hacia atrás al mostrarlas en horario de RD (UTC-4). Ej: `fechaPublicacion: "2026-08-10T00:00:00.000Z"` se muestra como "9 de agosto". Pendiente de resolver cuando se construya el selector de fecha en el panel admin (probablemente forzando la hora a mediodía UTC, o formateando explícitamente en UTC en el frontend).
+- **`setState` síncrono dentro de `useEffect` (resuelto)**: en `app/admin/noticias/page.tsx`, llamar directo a una función `async` que hacía `setCargando(true)` como primera línea disparaba el lint `react-hooks/set-state-in-effect`. Se corrigió separando el fetch (`fetchNoticias()`, sin tocar estado) del `useEffect`, que ahora actualiza estado dentro del `.then()` con bandera `ignore` para evitar updates tras desmontaje. Aplicar el mismo patrón en cualquier página nueva del panel que haga fetch en `useEffect`.
+- **Falta botón de login visible (resuelto)**: se agregó `UserMenu` en el Navbar, visible en todo el sitio público.
+- **`GET /api/miembros` sin proteger (resuelto, era un vacío de seguridad real)**: quedó público al armar roles en sesión 8 — cualquiera podía ver cédulas/teléfonos/emails de solicitantes. Se restringió a **solo Admin** (no Publicador, es dato sensible de personas). `POST /api/miembros` (afiliarse) se mantiene público, es la única ruta abierta de ese controlador.
+- **Navbar no reaccionaba a login/logout sin recargar (resuelto)**: `Navbar` lee sesión solo al montar, y como vive en el layout raíz no se remonta en navegación SPA. Se agregó un sistema de eventos custom (`alCambiarSesionUsuario`, `alCambiarSesionMiembro`) que las funciones de guardar/cerrar sesión disparan, y el Navbar escucha para actualizar su estado en vivo. Aplicar el mismo patrón a cualquier componente futuro que necesite reaccionar a cambios de sesión.
+- **Dropdown de cuenta roto en móvil (resuelto)**: un `position: absolute` anidado dentro del menú hamburguesa ya expandido rompía el layout. Se resolvió dando a `UserMenu` una variante `mobile` sin dropdown flotante — las opciones se muestran en línea dentro del menú ya abierto, en vez de un segundo nivel de despliegue.
 
 ## Decisiones técnicas registradas
 

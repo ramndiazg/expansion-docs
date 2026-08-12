@@ -96,6 +96,10 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 ## Decisiones de arquitectura registradas
 
 - **Autenticación**: NO se usa NextAuth/Auth.js. Se implementará JWT propio (mismo patrón que en Muvo RD Vial) para el futuro panel admin. Aplica cuando se construya login/panel de administración.
+- **Encuestas — votación (actualizado 2026-08-11)**: se descarta el diseño original de sesión 8 (votación anónima pública + modelo `Inscrito` ligero para captar gente fuera del movimiento). Ahora **solo Miembros afiliados y aprobados pueden votar**, usando su cuenta existente — no se crea ningún tipo de cuenta liviana solo-para-votar. Prioriza seguridad (un voto por persona real, verificada) sobre alcance viral. El modelo `Inscrito` NO se va a construir.
+- **Estructura de paneles**: Admin y Publicador comparten un solo panel en `/admin`, con visibilidad de funciones condicionada por rol (no son paneles separados). Miembro no tiene panel administrativo — tendrá un área liviana propia (`/cuenta`, sin construir aún) con: cambiar contraseña, ver encuestas donde ha votado, ver noticias donde ha comentado. Simple pero debe existir — no es opcional.
+- **Cambio de contraseñas por Admin**: los Admin deben poder cambiar la contraseña de cuentas de Usuario y de Miembro (ej. si alguien la olvida y no hay recuperación por correo todavía). Sin construir aún.
+- **Recuperación de contraseña (futuro, depende de correo)**: cuando se implemente envío de correos (aún no decidido cómo — pendiente de servicio gratuito), todos los tipos de cuenta (Usuario y Miembro) deben poder recuperar su contraseña por email. Bloqueado hasta tener el servicio de correo resuelto.
 
 ## Restricción de presupuesto
 
