@@ -100,6 +100,9 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 - **Estructura de paneles**: Admin y Publicador comparten un solo panel en `/admin`, con visibilidad de funciones condicionada por rol (no son paneles separados). Miembro no tiene panel administrativo — tendrá un área liviana propia (`/cuenta`, sin construir aún) con: cambiar contraseña, ver encuestas donde ha votado, ver noticias donde ha comentado. Simple pero debe existir — no es opcional.
 - **Cambio de contraseñas por Admin**: los Admin deben poder cambiar la contraseña de cuentas de Usuario y de Miembro (ej. si alguien la olvida y no hay recuperación por correo todavía). Sin construir aún.
 - **Recuperación de contraseña (futuro, depende de correo)**: cuando se implemente envío de correos (aún no decidido cómo — pendiente de servicio gratuito), todos los tipos de cuenta (Usuario y Miembro) deben poder recuperar su contraseña por email. Bloqueado hasta tener el servicio de correo resuelto.
+- **Compartir en redes (2026-08-12)**: implementado con Web Share API (`navigator.share`) como opción principal en móvil — permite compartir a cualquier app instalada (WhatsApp, Instagram, X, Facebook, etc.) sin integrarlas una por una. Fallback en desktop: íconos directos de WhatsApp/Facebook/X + "Copiar link". Componente reusable `ShareButtons`, usado en noticias y encuestas.
+- **Encuestas — anti-doble-voto (2026-08-12)**: además de exigir sesión de Miembro para votar (sesión 11), se agregó un array `votantes` en el modelo `Encuesta` para impedir que un mismo Miembro vote más de una vez en la misma encuesta.
+- **Flujo de link compartido de encuesta sin sesión (2026-08-12)**: quien recibe un link de encuesta sin ser Miembro ve la pregunta y puede afiliarse ahí mismo, pero la afiliación sigue quedando en estado `pendiente` de aprobación (no hay auto-login) — vuelve con el mismo link a votar una vez aprobada.
 
 ## Restricción de presupuesto
 
@@ -110,7 +113,7 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 - Render: plan gratuito para el backend.
 - Cualquier servicio adicional (email, analytics, captcha, etc.) debe evaluarse primero en su tier gratuito antes de considerar planes pagos.
 
-## Fase actual (actualizado 2026-08-11, sesión 11)
+## Fase actual (actualizado 2026-08-12, sesión 13)
 
 **Fase 0 — Esqueleto técnico: completada** (sesión 5).
 
@@ -124,18 +127,22 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 - Comentarios en noticias (solo Miembros aprobados) + moderación desde el panel
 - Menú de cuenta (UserMenu) dinámico en el sitio público
 - Cambio de contraseña (Usuario y Miembro, mismo endpoint)
-- Área de Miembro (`/cuenta`): contraseña + comentarios propios (votos pendiente de encuestas)
+- Área de Miembro (`/cuenta`): contraseña + comentarios propios
+- Sistema de encuestas completo: modelo con anti-doble-voto, endpoints protegidos (solo Miembro vota), página pública `/encuestas/[slug]`, panel admin (crear/cerrar/eliminar)
+- Compartir en redes sociales (WhatsApp, Facebook, X, Web Share API nativo) en noticias y encuestas, vía componente reusable `ShareButtons`
+- Flujo de redirect a login/afiliación cuando alguien sin sesión de Miembro intenta votar desde un link compartido
+- Backend desplegado en Render, frontend desplegado en Vercel (dominio: `https://expansion-frontend.vercel.app`)
+- Panel admin: link "Ver sitio" para volver al sitio público sin cerrar sesión
 
 **Pendiente para continuar la Fase 1** (ver detalle completo en `ARQUITECTURA.md` → "Aún no construido"):
 
 - Activar/desactivar cuentas de Usuario
-- Encuestas (código, con la restricción de solo-Miembro-vota)
 - Gestión de Voluntario/Evento en el panel (y decidir si proteger esas rutas del backend)
 - Edición de noticias existentes
 - Contenido real reemplazando los placeholders
 - Confirmar newsletter/donaciones/Contacto (ver más abajo, sigue sin decidir)
 
-**Fase 2 (no iniciada)**: deploy a producción (Vercel + Render), dominio, contenido final.
+**Fase 2 (no iniciada)**: dominio propio (hoy corre en subdominios gratuitos de Render/Vercel), contenido final.
 
 ## Decisiones pendientes de confirmar con Ramon
 

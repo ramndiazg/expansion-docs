@@ -380,3 +380,36 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 - Agregar edición de noticias existentes.
 - Sigue pendiente probar Voluntario/Evento/Encuesta (CRUD original) individualmente.
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
+
+---
+
+### 2026-08-12 — Sesión 13: Encuestas completas + compartir en redes (noticias y encuestas)
+
+**Qué se hizo:**
+
+- Backend de encuestas actualizado (modelo/controlador/rutas existían desde sesión 3-4 pero desactualizados): se agregó `slug` autogenerado al modelo `Encuesta` (mismo patrón que `Noticia`), se agregó array `votantes` para anti-doble-voto, se corrigió `POST /api/encuestas/:id/votar/:opcionId` para requerir sesión de Miembro (cerraba el pendiente detectado en sesión 12), se agregaron `GET /api/encuestas/slug/:slug` (público) y `GET /api/encuestas/:id/mi-estado` (Miembro).
+- Se creó componente reusable `components/ShareButtons.tsx`: Web Share API en móvil (cualquier app instalada), fallback WhatsApp/Facebook/X + copiar link en desktop.
+- Se creó `components/EncuestaVotacion.tsx`: maneja estado de sesión de Miembro, si ya votó, votar, y mostrar resultados con barra de porcentaje.
+- Se creó página pública `app/encuestas/[slug]/page.tsx`.
+- Se creó panel admin de encuestas: `app/admin/encuestas/page.tsx` (listado, cerrar, eliminar) y `app/admin/encuestas/nueva/page.tsx` (crear).
+- Se agregó tarjeta "Encuestas" al dashboard `app/admin/page.tsx`.
+- Se actualizaron `app/login/page.tsx` y `app/afiliate/page.tsx` para soportar `?redirect=` — permite que alguien sin sesión de Miembro, al intentar votar desde un link compartido, se afilie o loguee y vuelva directo a la encuesta. La afiliación sigue quedando `pendiente` de aprobación (no hay auto-login).
+- Se agregó `ShareButtons` a `app/noticias/[slug]/page.tsx` (compartir de noticias, pendiente desde el diseño original).
+- Se agregó link "Ver sitio" en `app/admin/layout.tsx` (pendiente detectado antes de esta sesión: el panel admin no tenía forma de volver al sitio público sin cerrar sesión).
+- Se corrigió bug de `setState` síncrono en `useEffect` en `app/admin/encuestas/page.tsx` (cuarta ocurrencia del mismo patrón ya documentado).
+- Infraestructura: backend confirmado desplegado en Render (`expansion-backend-8pk9.onrender.com`), frontend confirmado desplegado en Vercel (`expansion-frontend.vercel.app`). Se corrigió `CORS_ORIGIN` en Render (tenía `*`, ahora apunta al dominio real de Vercel) y se agregó `NEXT_PUBLIC_SITE_URL` en Vercel y en `.env.local`.
+
+**Qué se probó:**
+
+- Crear encuesta desde el panel admin. ✅
+- Login como Miembro y votación (pendiente de confirmar por Ramon antes del commit — ver nota abajo).
+
+**Qué falta / pendiente para próxima sesión:**
+
+- Confirmar que el flujo completo de votación como Miembro funciona de punta a punta en producción (Ramon estaba por probarlo al cierre de esta sesión).
+- Probar el flujo de link compartido sin sesión → afiliarse → aprobar → volver a votar, de punta a punta.
+- Proteger `/api/voluntarios` y `/api/eventos` con roles, o decidir explícitamente que se quedan abiertos.
+- Construir: endpoint y UI para activar/desactivar cuentas de Usuario.
+- Construir en el panel: gestión de Voluntario, Evento.
+- Agregar edición de noticias existentes.
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
