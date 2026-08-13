@@ -10,3 +10,6 @@ clave: S@msung57
 ====credenciales app=======
 mario@laexpansion.do
 claveSegura123
+
+ramon@laexpansion.do
+claveSegura123
