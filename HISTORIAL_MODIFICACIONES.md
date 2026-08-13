@@ -402,15 +402,16 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 **Qué se probó:**
 
 - Crear encuesta desde el panel admin. ✅
-- Login como Miembro y votación (pendiente de confirmar por Ramon antes del commit — ver nota abajo).
+- Login como Miembro y votación en la encuesta — **pendiente de confirmar por Ramon**, no se validó explícitamente durante esta sesión.
 
 **Qué falta / pendiente para próxima sesión:**
 
-- Confirmar que el flujo completo de votación como Miembro funciona de punta a punta en producción (Ramon estaba por probarlo al cierre de esta sesión).
+- Hacer commit de este bloque completo (backend: encuestas actualizado; frontend: encuestas, compartir, redirect, deploy) — **después** de confirmar el voto como Miembro.
+- Confirmar login como Miembro y votación de punta a punta.
 - Probar el flujo de link compartido sin sesión → afiliarse → aprobar → volver a votar, de punta a punta.
+- Probar compartir de noticias (recién agregado, sin confirmar en esta sesión).
 - Proteger `/api/voluntarios` y `/api/eventos` con roles, o decidir explícitamente que se quedan abiertos.
 - Construir: endpoint y UI para activar/desactivar cuentas de Usuario.
 - Construir en el panel: gestión de Voluntario, Evento.
 - Agregar edición de noticias existentes.
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
-- Los miembros no pueden ver las encuestas creadas, nos falto mostrar las encuestas en el flujo de las encuestas, deberian aparecer en la pagina de inicio de una forma vistoza pero tambien en el navbar deberia apareer un boton para acceder al area de encuestas donde tendriamos las encuestas creadas desde la ams reciente a la mas antigua y las cerradas con sus resultados. tambien hay una parte en el panel de miembro que deberia mostrar los votos en las encuestas de ese miembro, ese seria nuestro proximo flujo de trabajo. Tambien es buen momento para modificar la pagina de inicio y darle mas funcionalidad, puede ser integrar contenido ya existente.
