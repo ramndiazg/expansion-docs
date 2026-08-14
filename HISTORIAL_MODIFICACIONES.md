@@ -402,16 +402,44 @@ No saltarse pasos aunque el cambio parezca pequeño — el objetivo es que cualq
 **Qué se probó:**
 
 - Crear encuesta desde el panel admin. ✅
-- Login como Miembro y votación en la encuesta — **pendiente de confirmar por Ramon**, no se validó explícitamente durante esta sesión.
+- Login como Miembro y votación en la encuesta. ✅ (confirmado al inicio de la sesión 14, ver abajo — no se había confirmado todavía al escribir esta entrada la primera vez).
 
 **Qué falta / pendiente para próxima sesión:**
 
-- Hacer commit de este bloque completo (backend: encuestas actualizado; frontend: encuestas, compartir, redirect, deploy) — **después** de confirmar el voto como Miembro.
-- Confirmar login como Miembro y votación de punta a punta.
 - Probar el flujo de link compartido sin sesión → afiliarse → aprobar → volver a votar, de punta a punta.
 - Probar compartir de noticias (recién agregado, sin confirmar en esta sesión).
 - Proteger `/api/voluntarios` y `/api/eventos` con roles, o decidir explícitamente que se quedan abiertos.
 - Construir: endpoint y UI para activar/desactivar cuentas de Usuario.
 - Construir en el panel: gestión de Voluntario, Evento.
 - Agregar edición de noticias existentes.
+- Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
+
+---
+
+### 2026-08-12 — Sesión 14: Descubribilidad de encuestas, imágenes reales en noticias (Cloudinary), Videos separado de Noticias
+
+**Qué se hizo:**
+
+- **Confirmación pendiente de sesión 13**: login como Miembro y votación probados exitosamente al retomar.
+- **Descubribilidad de encuestas**: al probar, se detectó que no existía ninguna forma de encontrar una encuesta sin el link compartido exacto. Se creó `app/encuestas/page.tsx` (listado de activas), se agregó link "Encuestas" en `Navbar.tsx`, y un widget "Encuesta activa" en el Home (`app/page.tsx`, que pasó a ser `async function` para hacer el fetch server-side).
+- **Imágenes reales en noticias**: se detectó que `admin/noticias/nueva/page.tsx` nunca pedía imagen destacada, galería ni video, aunque el modelo ya los soportaba desde sesión 7 — solo se podían llenar por `curl`. Se decidió con Ramon usar **Cloudinary** (tier Free, preset `unsigned` `la_expansion_noticias`, cloud name `ewzg4kbr`) para subida real de archivos desde el navegador del admin, ya que Render (plan free) tiene disco efímero y no puede guardar archivos subidos de forma permanente. Se creó `components/ImageUploader.tsx` (reusable, sube directo a Cloudinary sin pasar por el backend). Se extrajo el formulario de noticia a `components/admin/NoticiaForm.tsx` (compartido entre crear y editar, con imagen destacada + galería de imágenes vía `ImageUploader`). Se creó `app/admin/noticias/[slug]/editar/page.tsx` (edición de noticias existentes — pendiente desde sesión 8). Se agregó link "Editar" en `app/admin/noticias/page.tsx`.
+- **Video separado de Noticias**: al probar, el video de YouTube no se veía en el detalle de noticia (el regex de extracción de ID solo reconocía `v=` y `youtu.be/`). En vez de solo arreglar el regex, se decidió con Ramon separar el video de Noticias por completo, a una sección propia más simple. Se quitó `videoUrl` del modelo `Noticia` y de `noticias/[slug]/page.tsx`. Se creó modelo `Video.js` (backend: solo título + link + estado + fechaPublicacion), `videoController.js`, `videoRoutes.js`, registrados en `server.js` bajo `/api/videos`. Se creó `components/admin/VideoForm.tsx`, panel admin (`app/admin/videos/page.tsx`, `nueva/page.tsx`, `[id]/editar/page.tsx`) y página pública `app/videos/page.tsx` (grilla de embeds, sin páginas de detalle individuales, con un regex más completo que reconoce `watch?v=`, `youtu.be/`, `/embed/` y `/shorts/`). Se agregaron accesos: link "Videos" en `Navbar.tsx`, tarjeta "Videos" en `app/admin/page.tsx`.
+
+**Qué se probó:**
+
+- Login como Miembro y votación en encuesta (confirmación pendiente de sesión 13). ✅
+- Descubrir y llegar a una encuesta vía `/encuestas`, Navbar, y widget del Home. ✅
+- Crear noticia con imagen destacada y galería subidas a Cloudinary, publicar, y ver que se muestran correctamente en `/noticias/[slug]`. ✅
+- Editar una noticia existente desde `/admin/noticias/[slug]/editar`. ✅
+
+**Qué NO se probó todavía:**
+
+- Sección de Videos completa (crear video, publicar, confirmar que el embed carga en `/videos`) — código completo, pendiente de que Ramon lo pruebe.
+
+**Qué falta / pendiente para próxima sesión:**
+
+- **Confirmar prueba de Videos de punta a punta antes de hacer commit de esa parte.**
+- Proteger `/api/voluntarios` y `/api/eventos` con roles, o decidir explícitamente que se quedan abiertos.
+- Construir: endpoint y UI para activar/desactivar cuentas de Usuario.
+- Construir en el panel: gestión de Voluntario, Evento.
 - Confirmar con Ramon: newsletter, donaciones, ubicación de Contacto (pendiente desde sesión 1).
