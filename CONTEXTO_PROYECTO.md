@@ -21,6 +21,7 @@ Desarrollador y líder técnico: Ramon (backend, frontend, bases de datos, algo 
    - Recién después se hace **commit**.
    - Solo entonces se empieza la siguiente parte.
 4. No se avanza a la siguiente fase sin cerrar este ciclo (probar → documentar → commit).
+5. Ramon prefiere recibir los archivos **completos** (no fragmentos/diffs) para pegar en su editor sin errores de aplicación.
 
 ## Estructura de repos
 
@@ -36,8 +37,6 @@ la-expansion/
 └── expansion-frontend/     → github.com/ramndiazg/expansion-frontend
 ```
 
-Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada repo (ej. `expansion-backend/src/server.js`), no a la carpeta padre `la-expansion/`.
-
 ## Funcionalidades acordadas (v2 — versión movimiento, no partido)
 
 ### 1. Institucional
@@ -46,19 +45,19 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 - Sobre el movimiento (historia, misión, visión, valores)
 - Liderazgo (Mario Díaz + estructura del movimiento)
 
-### 2. Prensa y noticias (núcleo del sitio)
+### 2. Sala de Prensa (núcleo del sitio) — renombrada de "Prensa y noticias" en sesión 15
 
-- CMS de noticias/notas de prensa con panel admin
-- Sala de prensa (kit de prensa: logo, fotos, bios, contacto de comunicaciones)
-- Buscador y filtros por fecha/categoría
-- RSS o suscripción por correo
-- Galería multimedia — **video separado a su propia sección "Videos" (2026-08-12), fuera de Prensa/Noticias**
-- "En los medios" (enlaces a cobertura externa)
+- CMS de noticias/notas de prensa con panel admin (ruta pública `/prensa`, ruta interna de admin sigue siendo `/admin/noticias`)
+- Sala de prensa (kit de prensa: logo, fotos, bios, contacto de comunicaciones) — no construido aún
+- Buscador y filtros por categoría — **construido sesión 15** (filtro por fecha aún no)
+- RSS o suscripción por correo — no construido
+- Galería multimedia — separada a su propia sección "Videos" (sesión 14), pendiente renombrar a "Multimedia"
+- "En los medios" — sigue siendo una categoría de noticia, no una sección aparte
 
 ### 3. Membresía
 
-- Formulario de afiliación en línea
-- Voluntariado
+- Formulario de afiliación en línea — **auto-aprobada desde sesión 15** (antes requería aprobación manual)
+- Voluntariado — modelo/CRUD backend existen, sin panel ni protección de rol
 
 ### 4. Transparencia
 
@@ -66,8 +65,8 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 
 ### 5. Participación ciudadana
 
-- Encuestas
-- Eventos próximos
+- Encuestas — **votación abierta sin cuenta desde sesión 15** (antes solo Miembros)
+- Eventos próximos — modelo/CRUD backend existen, sin panel ni protección de rol
 - Contacto (pendiente decidir si vive acá o dentro de Prensa — **por confirmar**)
 - Newsletter — **por confirmar si se queda**
 - Donaciones — **por confirmar si se queda**
@@ -75,8 +74,8 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 ### 6. Redes y difusión
 
 - Integración/enlaces a redes sociales
-- Botones de compartir en notas de prensa
-- Open Graph bien configurado
+- Botones de compartir en notas de prensa y encuestas — construido (`ShareButtons`, sesión 13)
+- Open Graph bien configurado — construido sesión 15
 
 ### 7. Multi-idioma/accesibilidad
 
@@ -84,74 +83,79 @@ Al pedir archivos o rutas de destino, Claude las va a referir relativas a cada r
 
 ### 8. Técnico/infraestructura
 
-- Frontend: Next.js (SSR/ISR para SEO de noticias) en Vercel
+- Frontend: Next.js (SSR/ISR para SEO) en Vercel
 - Backend: Node.js/Express en Render
 - Base de datos: MongoDB Atlas
-- Imágenes: Cloudinary (tier Free, subida directa desde el navegador) — agregado 2026-08-12
+- Imágenes: Cloudinary (tier Free, subida directa desde el navegador)
 - Panel de administración para publicar noticias sin tocar código
-- CI/CD con GitHub Actions
-- SEO técnico: sitemap.xml, robots.txt, metadatos dinámicos
-- Analytics (Google Analytics o Plausible)
-- Seguridad: rate limiting en formularios, captcha, backups de BD
+- CI/CD con GitHub Actions — pendiente de configurar
+- SEO técnico: sitemap.xml, robots.txt, metadatos dinámicos — **construido sesión 15**
+- Analytics (Google Analytics o Plausible) — no construido
+- Seguridad: rate limiting en formularios, captcha, backups de BD — no construido
 
 ## Decisiones de arquitectura registradas
 
-- **Autenticación**: NO se usa NextAuth/Auth.js. Se implementará JWT propio (mismo patrón que en Muvo RD Vial) para el futuro panel admin. Aplica cuando se construya login/panel de administración.
-- **Encuestas — votación (2026-08-11)**: se descarta el diseño original de sesión 8 (votación anónima pública + modelo `Inscrito` ligero para captar gente fuera del movimiento). Ahora **solo Miembros afiliados y aprobados pueden votar**, usando su cuenta existente — no se crea ningún tipo de cuenta liviana solo-para-votar. Prioriza seguridad (un voto por persona real, verificada) sobre alcance viral. El modelo `Inscrito` NO se va a construir.
-- **Estructura de paneles**: Admin y Publicador comparten un solo panel en `/admin`, con visibilidad de funciones condicionada por rol (no son paneles separados). Miembro no tiene panel administrativo — tiene un área liviana propia (`/cuenta`) con: cambiar contraseña, ver comentarios propios (votos en encuestas pendiente de mostrar ahí). Simple pero debe existir — no es opcional.
-- **Cambio de contraseñas por Admin**: los Admin deben poder cambiar la contraseña de cuentas de Usuario y de Miembro (ej. si alguien la olvida y no hay recuperación por correo todavía). Sin construir aún.
-- **Recuperación de contraseña (futuro, depende de correo)**: cuando se implemente envío de correos (aún no decidido cómo — pendiente de servicio gratuito), todos los tipos de cuenta (Usuario y Miembro) deben poder recuperar su contraseña por email. Bloqueado hasta tener el servicio de correo resuelto.
-- **Compartir en redes (2026-08-12)**: implementado con Web Share API (`navigator.share`) como opción principal en móvil — permite compartir a cualquier app instalada (WhatsApp, Instagram, X, Facebook, etc.) sin integrarlas una por una. Fallback en desktop: íconos directos de WhatsApp/Facebook/X + "Copiar link". Componente reusable `ShareButtons`, usado en noticias y encuestas.
-- **Encuestas — anti-doble-voto (2026-08-12)**: además de exigir sesión de Miembro para votar (sesión 11), se agregó un array `votantes` en el modelo `Encuesta` para impedir que un mismo Miembro vote más de una vez en la misma encuesta.
-- **Flujo de link compartido de encuesta sin sesión (2026-08-12)**: quien recibe un link de encuesta sin ser Miembro ve la pregunta y puede afiliarse ahí mismo, pero la afiliación sigue quedando en estado `pendiente` de aprobación (no hay auto-login) — vuelve con el mismo link a votar una vez aprobada.
-- **Descubribilidad de encuestas (2026-08-12)**: al probar el flujo de voto se detectó que no había forma de encontrar una encuesta sin recibir el link exacto — no aparecía en Home, Navbar ni ningún listado. Se agregó `/encuestas` (listado), link en el Navbar, y un widget de "Encuesta activa" en el Home.
-- **Imágenes en noticias vía Cloudinary (2026-08-12)**: el modelo de noticias ya tenía campos para imagen destacada y galería, pero el formulario del panel nunca los pedía (solo se podían llenar por `curl`). Se resolvió agregando subida real de archivos desde el panel, usando Cloudinary (tier Free, preset `unsigned`) porque Render (plan free) tiene disco efímero y no puede guardar archivos de forma permanente.
-- **Video separado de Noticias (2026-08-12)**: se descartó tener `videoUrl` dentro del modelo `Noticia` — mezclaba dos tipos de contenido distintos en un mismo formulario. Se creó un modelo y sección propios, `Video`, con formulario simple (solo título + link de YouTube) y su propia página pública `/videos` (grilla de embeds, sin páginas de detalle individuales por ahora).
+- **Autenticación**: NO se usa NextAuth/Auth.js. JWT propio (mismo patrón que Muvo RD Vial). Aplica a Usuario (panel) y Miembro (comentarios, área de cuenta) — **ya no aplica a votar en encuestas** desde sesión 15.
+- **Estructura de paneles**: Admin y Publicador comparten un solo panel en `/admin`, con visibilidad de funciones condicionada por rol. Miembro tiene un área liviana propia (`/cuenta`).
+- **Cambio de contraseñas por Admin**: pendiente de construir.
+- **Recuperación de contraseña por email**: bloqueado hasta tener un servicio de correo gratuito resuelto.
+- **Compartir en redes (sesión 13)**: Web Share API en móvil (cualquier app instalada) + fallback WhatsApp/Facebook/X en desktop. Componente `ShareButtons`, usado en Sala de Prensa y encuestas.
+- **Video separado de la Sala de Prensa (sesión 14)**: sección propia "Videos" (modelo simple: título + link de YouTube), sin páginas de detalle individuales.
+- **Imágenes vía Cloudinary (sesión 14)**: Render (plan free) tiene disco efímero, no puede guardar archivos subidos de forma permanente — Cloudinary (tier Free, preset `unsigned`) resuelve la subida real desde el panel.
+- **Descubribilidad de encuestas (sesión 14)**: listado `/encuestas`, link en Navbar, widget en Home — antes solo se llegaba por link compartido directo.
+- **Logo e identidad visual (sesión 15)**: emblema de tres círculos concéntricos con corte parcial, en azul/blanco/rojo (colores del movimiento) sobre fondo azul oscuro. Usado en Navbar, Home y favicon.
+- **Sala de Prensa — renombre y rediseño (sesión 15)**: "Noticias" no reflejaba el contenido real (comunicados, declaraciones, actividades, cobertura externa). Renombrada a "Sala de Prensa" (solo cara pública, ruta `/prensa`; el admin y el modelo `Noticia` no cambiaron de nombre). Listado rediseñado con tarjeta destacada + miniaturas, antes era solo texto.
+- **Votación abierta en encuestas (sesión 15, revierte decisión de sesión 11)**: exigir sesión de Miembro para votar frenaba la viralidad de las encuestas compartidas. Ahora cualquiera vota sin cuenta, protegido por un identificador anónimo en el navegador (`localStorage`) que previene doble voto desde el mismo dispositivo — no es a prueba de alguien que borre esa marca a propósito, pero es el estándar razonable para este caso de uso.
+- **Afiliación auto-aprobada (sesión 15, revierte parcialmente decisiones de sesiones 8/11)**: la aprobación manual de cada solicitud no escalaba y frenaba el crecimiento. Ahora las cuentas de Miembro quedan activas de inmediato al registrarse, con **validación de formato de cédula dominicana** (`XXX-XXXXXXX-X`, ej. `001-1566974-2`) y unicidad de cédula/email como control de calidad en el registro. El Admin conserva la capacidad de desactivar/rechazar una cuenta **después** del registro (moderación posterior en vez de previa) — `/admin/miembros` sigue existiendo para eso.
 
 ## Restricción de presupuesto
 
-**Todo el proyecto debe mantenerse gratis en la medida de lo posible.** Esto aplica a cada decisión de infraestructura y servicios de terceros:
+**Todo el proyecto debe mantenerse gratis en la medida de lo posible.**
 
-- MongoDB Atlas: tier **Free** (M0, 512 MB), no M10 ni Flex.
+- MongoDB Atlas: tier **Free** (M0, 512 MB).
 - Vercel: plan gratuito (Hobby).
 - Render: plan gratuito para el backend.
 - Cloudinary: plan gratuito (25 GB combinados de almacenamiento/ancho de banda al mes).
-- Cualquier servicio adicional (email, analytics, captcha, etc.) debe evaluarse primero en su tier gratuito antes de considerar planes pagos.
+- Cualquier servicio adicional debe evaluarse primero en su tier gratuito.
 
-## Fase actual (actualizado 2026-08-12, sesión 14)
+## Fase actual (actualizado 2026-08-12, sesión 15)
 
 **Fase 0 — Esqueleto técnico: completada** (sesión 5).
 
 **Fase 1 — Construcción de features: en curso.** Completado hasta ahora:
 
 - Páginas institucionales (Inicio, Sobre el movimiento, Liderazgo) con contenido placeholder
-- Sistema de noticias completo: CRUD backend, listado/detalle público, panel de creación y edición, con imagen destacada y galería reales (Cloudinary)
-- Sistema de auth JWT unificado (Usuario y Miembro por el mismo login)
+- **Sala de Prensa** (antes "Noticias"): CRUD backend, imagen destacada + galería (Cloudinary), buscador y filtro por categoría, listado con tarjeta destacada + miniaturas, panel de creación/edición
+- Sistema de auth JWT (Usuario y Miembro por el mismo login, pero votar en encuestas ya no lo requiere)
 - Roles Admin/Publicador con permisos diferenciados
-- Afiliación de miembros (con selects geográficos reales) + aprobación desde el panel
-- Comentarios en noticias (solo Miembros aprobados) + moderación desde el panel
-- Menú de cuenta (UserMenu) dinámico en el sitio público
-- Cambio de contraseña (Usuario y Miembro, mismo endpoint)
-- Área de Miembro (`/cuenta`): contraseña + comentarios propios
-- Sistema de encuestas completo: modelo con anti-doble-voto, endpoints protegidos (solo Miembro vota), página pública de detalle y de listado (`/encuestas`), panel admin (crear/cerrar/eliminar), descubrible desde Home/Navbar/listado
-- Sección de Videos (separada de Noticias): modelo propio, panel admin, grilla pública `/videos` — **código completo, pendiente de que Ramon confirme la prueba**
-- Compartir en redes sociales (WhatsApp, Facebook, X, Web Share API nativo) en noticias y encuestas, vía componente reusable `ShareButtons`
-- Flujo de redirect a login/afiliación cuando alguien sin sesión de Miembro intenta votar desde un link compartido
-- Backend desplegado en Render, frontend desplegado en Vercel (dominio: `https://expansion-frontend.vercel.app`)
-- Panel admin: link "Ver sitio" para volver al sitio público sin cerrar sesión
+- **Afiliación auto-aprobada**, con validación de formato de cédula y unicidad
+- Comentarios en noticias (sigue requiriendo cuenta de Miembro) + moderación desde el panel
+- Menú de cuenta (UserMenu) dinámico
+- Cambio de contraseña (Usuario y Miembro)
+- Área de Miembro (`/cuenta`) — nota: "mis votos" quedó desactualizado porque votar ya no requiere cuenta
+- **Encuestas con votación abierta sin cuenta** (protegida por marca en el navegador), descubribles desde Home/Navbar/listado, panel admin, compartibles
+- Sección de Videos (separada de Sala de Prensa) — código completo, pendiente de que Ramon confirme la prueba
+- Compartir en redes sociales (`ShareButtons`) en Sala de Prensa y encuestas
+- **Open Graph** (vista previa al compartir) y **SEO técnico** (sitemap.xml, robots.txt, metadatos dinámicos)
+- **Logo e identidad visual** (Navbar, Home, favicon)
+- Backend en Render, frontend en Vercel, todas las variables de entorno correctamente configuradas en ambos (incluyendo `NEXT_PUBLIC_SITE_URL`, que faltaba y causaba links de compartir rotos)
+- Panel admin: link "Ver sitio"
 
-**Pendiente para continuar la Fase 1** (ver detalle completo en `ARQUITECTURA.md` → "Aún no construido"):
+**Pendiente para continuar la Fase 1**:
 
-- Confirmar prueba end-to-end de la sección de Videos (crear, publicar, ver embed)
+- Confirmar prueba end-to-end de la sección de Videos
+- Proteger `/api/voluntarios` y `/api/eventos` con roles
+- Paneles de Voluntario y Evento (backend ya existe)
 - Activar/desactivar cuentas de Usuario
-- Gestión de Voluntario/Evento en el panel (y decidir si proteger esas rutas del backend)
+- Redefinir o quitar "mis votos en encuestas" en `/cuenta` (ya no aplica sin cuenta para votar)
+- Renombrar Videos a "Multimedia" y seguir potenciando esa sección y Sala de Prensa
 - Contenido real reemplazando los placeholders
-- Confirmar newsletter/donaciones/Contacto (ver más abajo, sigue sin decidir)
+- Confirmar newsletter/donaciones/Contacto
 
-**Fase 2 (no iniciada)**: dominio propio (hoy corre en subdominios gratuitos de Render/Vercel), contenido final.
+**Fase 2 (no iniciada)**: dominio propio, contenido final.
 
 ## Decisiones pendientes de confirmar con Ramon
 
 - Newsletter: ¿se queda o se va?
-- Donaciones: ¿se queda o se va (y si aplica legalmente para un movimiento)?
-- Contacto: ¿sección independiente o parte de Prensa?
+- Donaciones: ¿se queda o se va?
+- Contacto: ¿sección independiente o parte de Sala de Prensa?
